@@ -365,7 +365,6 @@ def daily_netcdf(
                 tbounds[t : t + tmp_data.shape[0], 1] = tmp_time[:] + 12
             t += tmp_data.shape[0]
 
-    print(nc1.variables.keys())
     nc1.close()
 
 
@@ -409,58 +408,58 @@ def daily_download_and_convert(
     delete_temp_dir : bool
     verbose : bool
     """
-    #try:
-    if isinstance(output_dir, Path):
-        output_dir = Path(output_dir)
-    if output_dir is None:
-        output_dir = Path.cwd()
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    try:
+        if isinstance(output_dir, Path):
+            output_dir = Path(output_dir)
+        if output_dir is None:
+            output_dir = Path.cwd()
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
 
-    if (2, 7) < sys.version_info < (3, 6):
-        output_dir = str(output_dir)
+        if (2, 7) < sys.version_info < (3, 6):
+            output_dir = str(output_dir)
 
-    temp_dir_download = tempfile.mkdtemp(dir=output_dir)
-    for i, var_name in enumerate(var_names):
-        if not merra2_var_dicts:
-            merra2_var_dict = var_list[var_name]
-        else:
-            merra2_var_dict = merra2_var_dicts[i]
-        # Download subdaily files
-        if i == 0:
-            subdaily_download(
-                merra2_server,
-                merra2_var_dict["esdt_dir"],
-                merra2_var_dict["collection"],
+        temp_dir_download = tempfile.mkdtemp(dir=output_dir)
+        for i, var_name in enumerate(var_names):
+            if not merra2_var_dicts:
+                merra2_var_dict = var_list[var_name]
+            else:
+                merra2_var_dict = merra2_var_dicts[i]
+            # Download subdaily files
+            if i == 0:
+                subdaily_download(
+                    merra2_server,
+                    merra2_var_dict["esdt_dir"],
+                    merra2_var_dict["collection"],
+                    initial_year,
+                    final_year,
+                    initial_month=initial_month,
+                    final_month=final_month,
+                    initial_day=initial_day,
+                    final_day=final_day,
+                    output_directory=temp_dir_download,
+                )
+            # Name the output file
+            if initial_year == final_year:
+                file_name_str = "{0}_day_merra2_reanalysis_{1}.nc4"
+                out_file_name = file_name_str.format(var_name, str(initial_year))
+            else:
+                file_name_str = "{0}_day_merra2_reanalysis_{1}-{2}.nc4"
+                out_file_name = file_name_str.format(
+                    var_name, str(initial_year), str(final_year)
+                )
+            out_file = Path(output_dir).joinpath(out_file_name)
+            # Extract variable
+            daily_netcdf(
+                temp_dir_download,
+                out_file,
+                var_name,
                 initial_year,
                 final_year,
-                initial_month=initial_month,
-                final_month=final_month,
-                initial_day=initial_day,
-                final_day=final_day,
-                output_directory=temp_dir_download,
+                verbose=verbose,
             )
-        # Name the output file
-        if initial_year == final_year:
-            file_name_str = "{0}_day_merra2_reanalysis_{1}.nc4"
-            out_file_name = file_name_str.format(var_name, str(initial_year))
-        else:
-            file_name_str = "{0}_day_merra2_reanalysis_{1}-{2}.nc4"
-            out_file_name = file_name_str.format(
-                var_name, str(initial_year), str(final_year)
-            )
-        out_file = Path(output_dir).joinpath(out_file_name)
-        # Extract variable
-        daily_netcdf(
-            temp_dir_download,
-            out_file,
-            var_name,
-            initial_year,
-            final_year,
-            verbose=verbose,
-        )
-    if delete_temp_dir:
-        shutil.rmtree(temp_dir_download)
-    #except BaseException:
-    #    shutil.rmtree(output_dir)
-    #    print("Error occurred in runtime, exiting...")
+        if delete_temp_dir:
+            shutil.rmtree(temp_dir_download)
+    except BaseException:
+        shutil.rmtree(output_dir)
+        print("Error occurred in runtime, exiting...")
