@@ -17,20 +17,6 @@ var_list = {
         "standard_name": "air_temperature",
         "least_significant_digit": 3,
     },
-    "uas": {
-        "esdt_dir": "M2I1NXASM.5.12.4",
-        "collection": "inst1_2d_asm_Nx",
-        "merra_name": "U10M",
-        "standard_name": "eastward_wind",
-        "least_significant_digit": 3,
-    },
-    "vas": {
-        "esdt_dir": "M2I1NXASM.5.12.4",
-        "collection": "inst1_2d_asm_Nx",
-        "merra_name": "V10M",
-        "standard_name": "northward_wind",
-        "least_significant_digit": 3,
-    },
     "rad": {
         "esdt_dir": "M2T1NXRAD.5.12.4",
         "collection": "tavg1_2d_rad_Nx",

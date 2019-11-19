@@ -19,18 +19,55 @@ from typing import Optional
 from typing import Union
 from variables import var_list
 
-defi2 = netCDF4.default_fillvals["i2"]
-defi4 = netCDF4.default_fillvals["i4"]
 deff4 = netCDF4.default_fillvals["f4"]
-
-KiB = 2 ** 10
-MiB = 2 ** 20
-GiB = 2 ** 30
 
 GESDISC_AUTH = {
     'uid': 'USERNAME',
     'password': 'PASSWORD',
 }
+
+# The arrays contain the coordinates of the grid used by the API.
+# The values are from 0 to 360 and 0 to 575
+lat_coords = np.arange(0, 361, dtype=int)
+lon_coords = np.arange(0, 576, dtype=int)
+
+def generate_url_params(parameter, time_para, lat_para, lon_para):
+    """Creates a string containing all the parameters in query form"""
+    parameter = map(lambda x: x + time_para, parameter)
+    parameter = map(lambda x: x + lat_para, parameter)
+    parameter = map(lambda x: x + lon_para, parameter)
+    addition = []
+    addition.append('time')
+    addition.append('lat' + lat_para)
+    addition.append('lon' + lon_para)
+    return ','.join(parameter) + ',' + ','.join(addition)
+
+def translate_lat_to_geos5_native(latitude):
+    """
+    The source for this formula is in the MERRA2
+    Variable Details - File specifications for GEOS pdf file.
+    The Grid in the documentation has points from 1 to 361 and 1 to 576.
+    The MERRA-2 Portal uses 0 to 360 and 0 to 575.
+    latitude: float Needs +/- instead of N/S
+    """
+    return ((latitude + 90) / 0.5)
+
+def translate_lon_to_geos5_native(longitude):
+    """See function above"""
+    return ((longitude + 180) / 0.625)
+
+def find_closest_coordinate(calc_coord, coord_array):
+    """
+    Since the resolution of the grid is 0.5 x 0.625, the 'real world'
+    coordinates will not be matched 100% correctly. This function matches
+    the coordinates as close as possible.
+    """
+    # np.argmin() finds the smallest value in an array and returns its
+    # index. np.abs() returns the absolute value of each item of an array.
+    # To summarize, the function finds the difference closest to 0 and returns
+    # its index.
+    index = np.abs(coord_array-calc_coord).argmin()
+    return coord_array[index]
 
 # function to build the database url
 def build_remote_url(merra2_collection, date):
@@ -42,14 +79,22 @@ def build_remote_url(merra2_collection, date):
     )
 
 # function to build the database file name
-def build_remote_filename(merra2_collection, date):
-    return (
-        'MERRA2_400.{abbrv}.{date:%Y%m%d}.nc4'
-        .format(abbrv=merra2_collection["collection"],
-                date=date)
-    )
+def build_remote_filename(merra2_collection, date, params):
+    if params is not None:
+        return (
+            'MERRA2_400.{abbrv}.{date:%Y%m%d}.nc4.nc?{params}'
+            .format(abbrv=merra2_collection["collection"],
+                    date=date, params=params)
+        )
+    else:
+        return (
+            'MERRA2_400.{abbrv}.{date:%Y%m%d}.nc4'
+            .format(abbrv=merra2_collection["collection"],
+                    date=date, params=params)
+        )
 
-def download_merra2_nc(merra2_collection, output_directory, date):
+
+def download_merra2_nc(merra2_collection, output_directory, date, params):
     if not isinstance(output_directory, Path):
         log_file = Path(output_directory)
 
@@ -60,19 +105,20 @@ def download_merra2_nc(merra2_collection, output_directory, date):
         log = []
 
 
-    if build_remote_filename(merra2_collection, date) in log:
-        print("Skipping existing file " + build_remote_filename(merra2_collection, date) + " from " + merra2_collection["esdt_dir"])
+    if build_remote_filename(merra2_collection, date, params) in log:
+        print("Skipping existing file " + build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
         return
     else:
-        print("Downloading new file " + build_remote_filename(merra2_collection, date) + " from " + merra2_collection["esdt_dir"])
+        print("Downloading new file " + build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
 
-        log.append(build_remote_filename(merra2_collection, date))
+        log.append(build_remote_filename(merra2_collection, date, params))
     final_ds = xr.Dataset()
 
     # build url
     url = os.path.join(build_remote_url(merra2_collection, date),
-                        build_remote_filename(merra2_collection, date))
+                        build_remote_filename(merra2_collection, date, params))
 
+    print(url)
     # session authentication per url neccesary
     session = setup_session(GESDISC_AUTH['uid'],
                             GESDISC_AUTH['password'], check_url=url)
@@ -99,7 +145,7 @@ def download_merra2_nc(merra2_collection, output_directory, date):
 
     # save final dataset to netCDF
     filename = os.path.join(output_directory,
-                            build_remote_filename(merra2_collection, date))
+                            build_remote_filename(merra2_collection, date, params))
 
     encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
     final_ds.to_netcdf(filename, encoding=encoding)
@@ -122,6 +168,7 @@ def subdaily_universal_download(
     final_month: int = 12,
     initial_day: int = 1,
     final_day: Optional[int] = None,
+    params: Optional[str] = None,
     output_directory: Union[str, Path] = None,
 ):
     """
@@ -140,10 +187,9 @@ def subdaily_universal_download(
 
     """
     for date in iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-        download_merra2_nc(merra2_collection, output_directory, date)
+        download_merra2_nc(merra2_collection, output_directory, date, params)
 
 def subdaily_download(
-    merra2_server: str,
     dataset_esdt: str,
     merra2_collection: str,
     initial_year: int,
@@ -152,6 +198,7 @@ def subdaily_download(
     final_month: int = 12,
     initial_day: int = 1,
     final_day: Optional[int] = None,
+    params: Optional[str] = None,
     output_directory: Union[str, Path] = None,
 ):
     """
@@ -159,9 +206,6 @@ def subdaily_download(
 
     Parameters
     ----------
-    merra2_server : str
-        Must contain trailing slash.
-        e.g. https://goldsmr4.gesdisc.eosdis.nasa.gov/data/
     dataset_esdt : str
     merra2_collection : str
     initial_year : int
@@ -186,8 +230,11 @@ def subdaily_download(
         log = np.load(log_file).tolist()
     else:
         log = []
+    if params is not None:
+        data_path = "MERRA2/{4}/{0}/{1}/" "MERRA2_{3}.{5}.{0}{1}{2}.nc4.nc?{6}"
+    else:
+        data_path = "MERRA2/{4}/{0}/{1}/" "MERRA2_{3}.{5}.{0}{1}{2}.nc4"
 
-    data_path = "MERRA2/{4}/{0}/{1}/" "MERRA2_{3}.{5}.{0}{1}{2}.nc4"
     for yyyy in range(initial_year, final_year + 1):
         if yyyy < 1992:
             merra_stream = "100"
@@ -216,20 +263,31 @@ def subdaily_download(
                 mrange = monthrange(yyyy, mm)
                 df = mrange[1]
             for dd in range(di, df + 1):
-                cdp = data_path.format(
-                    str(yyyy),
-                    str(mm).zfill(2),
-                    str(dd).zfill(2),
-                    merra_stream,
-                    dataset_esdt,
-                    merra2_collection,
-                )
+                if params is not None:
+                    cdp = data_path.format(
+                        str(yyyy),
+                        str(mm).zfill(2),
+                        str(dd).zfill(2),
+                        merra_stream,
+                        dataset_esdt,
+                        merra2_collection,
+                        params
+                    )
+                else:
+                    cdp = data_path.format(
+                        str(yyyy),
+                        str(mm).zfill(2),
+                        str(dd).zfill(2),
+                        merra_stream,
+                        dataset_esdt,
+                        merra2_collection,
+                    )
 
                 if cdp + dataset_esdt in log:
                     print("Skipping existing file " + cdp + " from " + dataset_esdt)
                     continue
                 else:
-                    print("Downloading new file " + build_remote_filename(merra2_collection, date) + " from " + merra2_collection["esdt_dir"])
+                    print("Downloading new file " + cdp + " from " + dataset_esdt)
                     log.append(cdp + dataset_esdt)
 
                 subprocess.call(
@@ -242,7 +300,7 @@ def subdaily_download(
                         "--save-cookies",
                         str(Path("~/.urs_cookies").expanduser()),
                         "--keep-session-cookies",
-                        merra2_server + cdp,
+                        "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/" + cdp,
                     ]
                 )
     np.save(log_file, np.array(log))
@@ -471,8 +529,9 @@ def daily_netcdf(
     nc1.close()
 
 
+
+
 def daily_download_and_convert(
-    merra2_server: str,
     var_names: List[str],
     initial_year: int,
     final_year: Optional[int] = datetime.datetime.now().year,
@@ -480,6 +539,10 @@ def daily_download_and_convert(
     final_month: Optional[int] = datetime.datetime.now().month,
     initial_day: int = 1,
     final_day: Optional[int] = datetime.datetime.now().day,
+    lat_1: Optional[float] = -90,
+    lon_1: Optional[float] = -180,
+    lat_2: Optional[float] = 90,
+    lon_2: Optional[float] = 180,
     merra2_var_dicts: Optional[List[dict]] = None,
     output_dir: Union[str, Path] = None,
     delete_temp_dir: bool = True,
@@ -490,9 +553,6 @@ def daily_download_and_convert(
 
     Parameters
     ----------
-    merra2_server : str
-        Must contain trailing slash.
-        e.g. https://goldsmr4.gesdisc.eosdis.nasa.gov/data/
     var_names : List[str]
         Variable short names, must be defined in variables.py
         if merra2_var_dict is not provided. If more than one variable,
@@ -545,6 +605,34 @@ def daily_download_and_convert(
             merra2_var_dict = merra2_var_dicts[i]
         # Download subdaily files
         if i == 0:
+            # Translate the coordinates that define your area to grid coordinates.
+            lat_coord_1 = translate_lat_to_geos5_native(lat_1)
+            lon_coord_1 = translate_lon_to_geos5_native(lon_1)
+            lat_coord_2 = translate_lat_to_geos5_native(lat_2)
+            lon_coord_2 = translate_lon_to_geos5_native(lon_2)
+
+
+            # Find the closest coordinate in the grid.
+            lat_co_1_closest = find_closest_coordinate(lat_coord_1, lat_coords)
+            lon_co_1_closest = find_closest_coordinate(lon_coord_1, lon_coords)
+            lat_co_2_closest = find_closest_coordinate(lat_coord_2, lat_coords)
+            lon_co_2_closest = find_closest_coordinate(lon_coord_2, lon_coords)
+
+            requested_lat = '[{lat_1}:{lat_2}]'.format(
+                    lat_1=lat_co_1_closest, lat_2=lat_co_2_closest
+                )
+            requested_lon = '[{lon_1}:{lon_2}]'.format(
+                    lon_1=lon_co_1_closest, lon_2=lon_co_2_closest
+                )
+
+            if isinstance(merra2_var_dict['merra_name'], list):
+                requested_params = merra2_var_dict['merra_name']
+            else:
+                requested_params = [merra2_var_dict['merra_name']]
+            requested_time = '[0:0]'
+            parameter = generate_url_params(requested_params, requested_time,
+                                                    requested_lat, requested_lon)
+
             if download_method == "xr":
                 subdaily_universal_download(
                     merra2_var_dict,
@@ -555,10 +643,10 @@ def daily_download_and_convert(
                     initial_day=initial_day,
                     final_day=final_day,
                     output_directory=temp_dir_download,
+                    params=parameter,
                 )
             else:
                 subdaily_download(
-                    merra2_server,
                     merra2_var_dict["esdt_dir"],
                     merra2_var_dict["collection"],
                     initial_year,
@@ -568,6 +656,7 @@ def daily_download_and_convert(
                     initial_day=initial_day,
                     final_day=final_day,
                     output_directory=temp_dir_download,
+                    params=parameter,
                 )
         # Name the output file
         if initial_year == final_year:
