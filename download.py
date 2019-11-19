@@ -1,6 +1,7 @@
 import datetime
 from pydap.client import open_url
 from pydap.cas.urs import setup_session
+from process import DownloadManager
 import xarray as xr
 import config
 import utils
@@ -118,37 +119,17 @@ def download_merra2_nc(merra2_collection, output_directory, date, params):
     url = os.path.join(build_remote_url(merra2_collection, date),
                         build_remote_filename(merra2_collection, date, params))
 
-    print(url)
-    # session authentication per url neccesary
-    session = setup_session(GESDISC_AUTH['uid'],
-                            GESDISC_AUTH['password'], check_url=url)
-    store = xr.backends.PydapDataStore.open(url, session=session)
-    remote_ds = xr.open_dataset(store)
+    NUMBER_OF_CONNECTIONS = 2
 
-    # subset to desired variables and merge
-    final_ds = xr.merge([final_ds, remote_ds[merra2_collection['merra_name']]])
+    # The DownloadManager class is defined in the opendap_download module.
+    download_manager = DownloadManager()
+    download_manager.set_username_and_password(GESDISC_AUTH['uid'], GESDISC_AUTH['password'])
+    download_manager.download_path = output_directory
+    download_manager.download_urls = [url]
 
-
-    # xarray to netCDF hack to avoid AttributeError
-    if 'NAME' in final_ds.time:
-        del final_ds.time.attrs['NAME']
-    if 'CLASS' in final_ds.time:
-        del final_ds.time.attrs['CLASS']
-    if 'NAME' in final_ds.lat:
-        del final_ds.lat.attrs['NAME']
-    if 'CLASS' in final_ds.lat:
-        del final_ds.lat.attrs['CLASS']
-    if 'NAME' in final_ds.lon:
-        del final_ds.lon.attrs['NAME']
-    if 'CLASS' in final_ds.lon:
-        del final_ds.lon.attrs['CLASS']
-
-    # save final dataset to netCDF
-    filename = os.path.join(output_directory,
-                            build_remote_filename(merra2_collection, date, params))
-
-    encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
-    final_ds.to_netcdf(filename, encoding=encoding)
+    # If you want to see the download progress, check the download folder you
+    # specified
+    download_manager.start_download(NUMBER_OF_CONNECTIONS)
     np.save(log_file, np.array(log))
 
 
@@ -337,7 +318,7 @@ def daily_netcdf(
     if not merra2_var_dict:
         merra2_var_dict = var_list[var_name]
 
-    search_str = "*{0}*.nc4".format(merra2_var_dict["collection"])
+    search_str = "*{0}*.nc4*".format(merra2_var_dict["collection"])
     nc_files = [str(f) for f in path_data.rglob(search_str)]
     if os.path.exists(output_file) and len(os.listdir(path_data)) != 0:
         shutil.copy(output_file, path_data)
@@ -354,7 +335,10 @@ def daily_netcdf(
         try:
             yyyy = int(nc_file.split(".")[-2][0:4])
         except ValueError:
-            yyyy = int(nc_file.split(".")[-2][-4:])
+            try:
+                yyyy = int(nc_file.split(".")[-2][-4:])
+            except ValueError:
+                yyyy = int(nc_file.split(".")[-3][0:4])
         if (yyyy >= initial_year) and (yyyy <= final_year):
             relevant_files.append(nc_file)
             nc = netCDF4.Dataset(nc_file, "r")
@@ -374,15 +358,10 @@ def daily_netcdf(
             var_ref[name] = nc_reference.variables[name]
     else:
         var_ref = nc_reference.variables[merra2_var_dict["merra_name"]]
-
     nc_file = output_file
-
     now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
     nc1 = netCDF4.Dataset(nc_file, "w", format="NETCDF4_CLASSIC")
-
     nc1.Conventions = "CF-1.7"
-
     nc1.title = (
         "Modern-Era Retrospective analysis for Research and " "Applications, Version 2"
     )
@@ -521,14 +500,12 @@ def daily_netcdf(
                 time[t[name] : t[name] + ncvar[name].shape[0]] = nctime_1980[:]
                 t[name] += ncvar[name].shape[0]
         else:
-            var1[t : t + tmp_data.shape[0], :, :] = tmp_data[:, :, :]
-            time[t : t + tmp_data.shape[0]] = tmp_time[:]
-            t += tmp_data.shape[0]
+            var1[t : t + ncvar.shape[0], :, :] = ncvar[:, :, :]
+            time[t : t + ncvar.shape[0]] = nctime_1980[:]
+            t += ncvar.shape[0]
         nc.close()
 
     nc1.close()
-
-
 
 
 def daily_download_and_convert(
@@ -580,7 +557,8 @@ def daily_download_and_convert(
     Leave final_* fields empty to download all data available from the given initial date till today.
 
     """
-    #try:
+    if lat_1 > lat_2 or lon_1 > lon_2:
+        raise RuntimeError("Illegal data area selected!")
     if download_method == "xr":
         print("Using universal built-in method to download...")
     else:
@@ -629,7 +607,7 @@ def daily_download_and_convert(
                 requested_params = merra2_var_dict['merra_name']
             else:
                 requested_params = [merra2_var_dict['merra_name']]
-            requested_time = '[0:0]'
+            requested_time = '[0:23]'
             parameter = generate_url_params(requested_params, requested_time,
                                                     requested_lat, requested_lon)
 
@@ -646,6 +624,8 @@ def daily_download_and_convert(
                     params=parameter,
                 )
             else:
+                if lat_1 != -90 or lat_2 != 90 or lon_1 != -180 or lon_2 != 180:
+                    raise RuntimeError("Region specific download not supported for wget")
                 subdaily_download(
                     merra2_var_dict["esdt_dir"],
                     merra2_var_dict["collection"],
@@ -656,14 +636,13 @@ def daily_download_and_convert(
                     initial_day=initial_day,
                     final_day=final_day,
                     output_directory=temp_dir_download,
-                    params=parameter,
                 )
         # Name the output file
         if initial_year == final_year:
-            file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc4"
+            file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
             out_file_name = file_name_str.format(var_name, merra2_var_dict["esdt_dir"], str(initial_year))
         else:
-            file_name_str = "{0}_{1}_merra2_reanalysis_{2}-{3}.nc4"
+            file_name_str = "{0}_{1}_merra2_reanalysis_{2}-{3}.nc"
             out_file_name = file_name_str.format(
                 var_name, merra2_var_dict["esdt_dir"], str(initial_year), str(final_year)
             )
@@ -679,6 +658,3 @@ def daily_download_and_convert(
         )
     if delete_temp_dir:
         shutil.rmtree(temp_dir_download)
-    #except BaseException:
-    #    shutil.rmtree(output_dir)
-    #    print("Error occurred in runtime, exiting...")

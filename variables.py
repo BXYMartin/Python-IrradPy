@@ -3,20 +3,6 @@
 # https://goldsmr5.sci.gsfc.nasa.gov/data/
 
 var_list = {
-    "tasmax": {
-        "esdt_dir": "M2SDNXSLV.5.12.4",
-        "collection": "statD_2d_slv_Nx",
-        "merra_name": ["T2MMAX", "T2MMIN"],
-        "standard_name": "air_temperature",
-        "least_significant_digit": 3,
-    },
-    "tasmin": {
-        "esdt_dir": "M2SDNXSLV.5.12.4",
-        "collection": "statD_2d_slv_Nx",
-        "merra_name": "T2MMIN",
-        "standard_name": "air_temperature",
-        "least_significant_digit": 3,
-    },
     "rad": {
         "esdt_dir": "M2T1NXRAD.5.12.4",
         "collection": "tavg1_2d_rad_Nx",
