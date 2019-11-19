@@ -8,9 +8,9 @@ import download
 
 
 def test_daily_download_convert():
-    var_names = ['tasmax']
+    var_names = ['rad', 'slv', 'aer']
     delete_temp_dir = True
-    download_dir = os.path.join(os.getcwd(), "resources")
+    download_dir = os.path.join(os.getcwd(), "MERRA2_data")
     merra2_server = 'https://goldsmr4.gesdisc.eosdis.nasa.gov/data/'
     download_method = "xr"
 
