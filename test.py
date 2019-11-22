@@ -5,7 +5,8 @@ import shutil
 import sys
 import tempfile
 import download
-
+#import schedule
+#from time import sleep
 
 def test_daily_download_convert():
     # var_names you want to download, links defined in variables.py
@@ -14,6 +15,13 @@ def test_daily_download_convert():
     delete_temp_dir = False
     # define your desired download directory
     download_dir = os.path.join(os.getcwd(), "MERRA2_data")
+    # define interest region
+    left_bottom_coord = [-11, -22]
+    right_top_coord = [11, 22]
+    # define time period
+    initial_year = 2015
+    initial_month = 11
+    initial_day = 1
     # add your username and password
     GESDISC_AUTH = {
         'uid': 'USERNAME',
@@ -21,13 +29,18 @@ def test_daily_download_convert():
     }
     # call the main function
     download.daily_download_and_convert(
-        var_names, merra2_var_dicts=None, initial_year=2015,
-        final_year=2015, initial_month=1, final_month=1, initial_day=1,
-        final_day=1, output_dir=download_dir,
+        var_names, merra2_var_dicts=None,
+        initial_year=initial_year, initial_month=initial_month, initial_day=initial_day,
+        output_dir=download_dir,
         auth=GESDISC_AUTH,
         delete_temp_dir=delete_temp_dir,
-        lat_1=-11, lon_1=-22, lat_2=22, lon_2=33)
+        lat_1=left_bottom_coord[0], lon_1=left_bottom_coord[1],
+        lat_2=right_top_coord[0], lon_2=right_top_coord[1])
 
 
 if __name__ == "__main__":
     test_daily_download_convert()
+    # schedule.every(3).weeks.do(test_daily_download_convert)
+    # while True:
+    #     schedule.run_pending()
+    #     sleep(500000)

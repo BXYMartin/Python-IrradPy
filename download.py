@@ -160,6 +160,8 @@ def subdaily_universal_download(
     final_month : int
     initial_day : int
     final_day : Optional[int]
+    params : Optional[str]
+    auth : dict,
     output_directory : Union[str, Path]
 
     """
@@ -429,10 +431,9 @@ def daily_download_and_convert(
         Select from [1, 12]
     initial_day : int
         Initial day for the data to be downloaded.
-        Select from [1, Days in that Month]
+        Select from [1, 12]
     final_day : Optional[int]
         Final day for the data to be downloaded.
-        Select from [1, Days in that Month]
     lat_1 : Optional[float]
         Define the latitude of the left bottom corner of the rectangle region of interest.
         Select a value from [-90, +90]
