@@ -22,11 +22,6 @@ from variables import var_list
 
 deff4 = netCDF4.default_fillvals["f4"]
 
-GESDISC_AUTH = {
-    'uid': 'USERNAME',
-    'password': 'PASSWORD',
-}
-
 # The arrays contain the coordinates of the grid used by the API.
 # The values are from 0 to 360 and 0 to 575
 lat_coords = np.arange(0, 361, dtype=int)
@@ -95,7 +90,7 @@ def build_remote_filename(merra2_collection, date, params):
         )
 
 
-def download_merra2_nc(merra2_collection, output_directory, date, params):
+def download_merra2_nc(merra2_collection, output_directory, date, params, auth):
     if not isinstance(output_directory, Path):
         log_file = Path(output_directory)
 
@@ -123,7 +118,7 @@ def download_merra2_nc(merra2_collection, output_directory, date, params):
 
     # The DownloadManager class is defined in the opendap_download module.
     download_manager = DownloadManager()
-    download_manager.set_username_and_password(GESDISC_AUTH['uid'], GESDISC_AUTH['password'])
+    download_manager.set_username_and_password(auth['uid'], auth['password'])
     download_manager.download_path = output_directory
     download_manager.download_urls = [url]
 
@@ -150,6 +145,7 @@ def subdaily_universal_download(
     initial_day: int = 1,
     final_day: Optional[int] = None,
     params: Optional[str] = None,
+    auth: dict = None,
     output_directory: Union[str, Path] = None,
 ):
     """
@@ -168,123 +164,7 @@ def subdaily_universal_download(
 
     """
     for date in iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-        download_merra2_nc(merra2_collection, output_directory, date, params)
-
-def subdaily_download(
-    dataset_esdt: str,
-    merra2_collection: str,
-    initial_year: int,
-    final_year: int,
-    initial_month: int = 1,
-    final_month: int = 12,
-    initial_day: int = 1,
-    final_day: Optional[int] = None,
-    params: Optional[str] = None,
-    output_directory: Union[str, Path] = None,
-):
-    """
-    MERRA2 subdaily download.
-
-    Parameters
-    ----------
-    dataset_esdt : str
-    merra2_collection : str
-    initial_year : int
-    final_year : int
-    initial_month : int
-    final_month : int
-    initial_day : int
-    final_day : Optional[int]
-    output_directory : Union[str, Path]
-    """
-
-    if output_directory is None:
-        add_output_dir = ""
-    else:
-        add_output_dir = "--directory-prefix={0}".format(output_directory)
-
-    if not isinstance(output_directory, Path):
-        log_file = Path(output_directory)
-
-    log_file = os.path.join(log_file.parent, 'index.npy')
-    if os.path.exists(log_file):
-        log = np.load(log_file).tolist()
-    else:
-        log = []
-    if params is not None:
-        data_path = "MERRA2/{4}/{0}/{1}/" "MERRA2_{3}.{5}.{0}{1}{2}.nc4.nc?{6}"
-    else:
-        data_path = "MERRA2/{4}/{0}/{1}/" "MERRA2_{3}.{5}.{0}{1}{2}.nc4"
-
-    for yyyy in range(initial_year, final_year + 1):
-        if yyyy < 1992:
-            merra_stream = "100"
-        elif yyyy < 2001:
-            merra_stream = "200"
-        elif yyyy < 2011:
-            merra_stream = "300"
-        else:
-            merra_stream = "400"
-        if yyyy == initial_year:
-            mi = initial_month
-        else:
-            mi = 1
-        if yyyy == final_year:
-            mf = final_month
-        else:
-            mf = 12
-        for mm in range(mi, mf + 1):
-            if (yyyy == initial_year) and (mm == mi):
-                di = initial_day
-            else:
-                di = 1
-            if final_day and (yyyy == final_year) and (mm == mf):
-                df = final_day
-            else:
-                mrange = monthrange(yyyy, mm)
-                df = mrange[1]
-            for dd in range(di, df + 1):
-                if params is not None:
-                    cdp = data_path.format(
-                        str(yyyy),
-                        str(mm).zfill(2),
-                        str(dd).zfill(2),
-                        merra_stream,
-                        dataset_esdt,
-                        merra2_collection,
-                        params
-                    )
-                else:
-                    cdp = data_path.format(
-                        str(yyyy),
-                        str(mm).zfill(2),
-                        str(dd).zfill(2),
-                        merra_stream,
-                        dataset_esdt,
-                        merra2_collection,
-                    )
-
-                if cdp + dataset_esdt in log:
-                    print("Skipping existing file " + cdp + " from " + dataset_esdt)
-                    continue
-                else:
-                    print("Downloading new file " + cdp + " from " + dataset_esdt)
-                    log.append(cdp + dataset_esdt)
-
-                subprocess.call(
-                    [
-                        "wget",
-                        "-c",
-                        add_output_dir,
-                        "--load-cookies",
-                        str(Path("~/.urs_cookies").expanduser()),
-                        "--save-cookies",
-                        str(Path("~/.urs_cookies").expanduser()),
-                        "--keep-session-cookies",
-                        "https://goldsmr4.gesdisc.eosdis.nasa.gov/data/" + cdp,
-                    ]
-                )
-    np.save(log_file, np.array(log))
+        download_merra2_nc(merra2_collection, output_directory, date, params, auth)
 
 
 def daily_netcdf(
@@ -522,8 +402,8 @@ def daily_download_and_convert(
     lon_2: Optional[float] = 180,
     merra2_var_dicts: Optional[List[dict]] = None,
     output_dir: Union[str, Path] = None,
+    auth: dict = None,
     delete_temp_dir: bool = True,
-    download_method: str = "xr",
     verbose: bool = True,
 ):
     """MERRA2 daily download and conversion.
@@ -536,20 +416,44 @@ def daily_download_and_convert(
         they are assumed to have the same original files and those will only
         be downloaded once.
     initial_year : int
+        Initial year for the data to be downloaded.
+        Select from [1980, Now]
     final_year : int
+        Final year for the data to be downloaded.
+        Select from [1980, Now]
     initial_month : int
+        Initial month for the data to be downloaded.
+        Select from [1, 12]
     final_month : int
+        Final month for the data to be downloaded.
+        Select from [1, 12]
     initial_day : int
+        Initial day for the data to be downloaded.
+        Select from [1, Days in that Month]
     final_day : Optional[int]
+        Final day for the data to be downloaded.
+        Select from [1, Days in that Month]
+    lat_1 : Optional[float]
+        Define the latitude of the left bottom corner of the rectangle region of interest.
+        Select a value from [-90, +90]
+    lon_1 : Optional[float]
+        Define the longitude of the left bottom corner of the rectangle region of interest.
+        Select a value from [-180, +180]
+    lat_2 : Optional[float]
+        Define the latitude of the right top corner of the rectangle region of interest.
+        Select a value from [-90, +90]
+    lon_2 : Optional[float]
+        Define the longitude of the right top corner of the rectangle region of interest.
+        Select a value from [-180, +180]
     merra2_var_dicts : Optional[List[dict]]
         Dictionary containing the following keys:
         esdt_dir, collection, merra_name, standard_name,
         see the Bosilovich paper for details. Same order as var_names.
     output_dir : Union[str, Path]
+    auth : dict
+        Dictionary contains login information.
+        {"uid": "USERNAME", "password": "PASSWORD"}
     delete_temp_dir : bool
-    download_method : str
-        Possible ways:  xr      (xarray)
-                        wget    (wget)
     verbose : bool
 
     Notes
@@ -559,10 +463,6 @@ def daily_download_and_convert(
     """
     if lat_1 > lat_2 or lon_1 > lon_2:
         raise RuntimeError("Illegal data area selected!")
-    if download_method == "xr":
-        print("Using universal built-in method to download...")
-    else:
-        print("Using wget method to download... (requires wget authentication)")
     print("Downloading data from {0}-{1}-{2} to {3}-{4}-{5}..."
             .format(initial_year, initial_month, initial_day, final_year, final_month, final_day))
     if isinstance(output_dir, Path):
@@ -611,32 +511,18 @@ def daily_download_and_convert(
             parameter = generate_url_params(requested_params, requested_time,
                                                     requested_lat, requested_lon)
 
-            if download_method == "xr":
-                subdaily_universal_download(
-                    merra2_var_dict,
-                    initial_year,
-                    final_year,
-                    initial_month=initial_month,
-                    final_month=final_month,
-                    initial_day=initial_day,
-                    final_day=final_day,
-                    output_directory=temp_dir_download,
-                    params=parameter,
-                )
-            else:
-                if lat_1 != -90 or lat_2 != 90 or lon_1 != -180 or lon_2 != 180:
-                    raise RuntimeError("Region specific download not supported for wget")
-                subdaily_download(
-                    merra2_var_dict["esdt_dir"],
-                    merra2_var_dict["collection"],
-                    initial_year,
-                    final_year,
-                    initial_month=initial_month,
-                    final_month=final_month,
-                    initial_day=initial_day,
-                    final_day=final_day,
-                    output_directory=temp_dir_download,
-                )
+            subdaily_universal_download(
+                merra2_var_dict,
+                initial_year,
+                final_year,
+                initial_month=initial_month,
+                final_month=final_month,
+                initial_day=initial_day,
+                final_day=final_day,
+                output_directory=temp_dir_download,
+                auth=auth,
+                params=parameter,
+            )
         # Name the output file
         if initial_year == final_year:
             file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
