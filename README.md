@@ -27,7 +27,7 @@ MERRA2_CSM.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
 
 ``` python
     Parameters
-    ----------
+    
     var_names : List[str]
         Variable short names, must be defined in variables.py
         if merra2_var_dict is not provided. If more than one variable,
