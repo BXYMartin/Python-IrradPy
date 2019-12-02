@@ -143,7 +143,7 @@ class DownloadManager(object):
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 raise IndexError('Requested URL is not available.')
-            else if e.code == 401:
+            elif e.code == 401:
                 raise ValueError('Username and or Password are not correct!')
             else:
                 raise e

@@ -6,6 +6,8 @@ import xarray as xr
 import config
 import utils
 import shutil
+import multiprocessing
+from functools import partial
 import subprocess
 import sys
 import os
@@ -90,24 +92,7 @@ def build_remote_filename(merra2_collection, date, params):
         )
 
 
-def download_merra2_nc(merra2_collection, output_directory, date, params, auth):
-    if not isinstance(output_directory, Path):
-        log_file = Path(output_directory)
-
-    log_file = os.path.join(log_file.parent, 'index.npy')
-    if os.path.exists(log_file):
-        log = np.load(log_file).tolist()
-    else:
-        log = []
-
-
-    if build_remote_filename(merra2_collection, date, params) in log:
-        print("Skipping existing file " + build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
-        return
-    else:
-        print("Downloading new file " + build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
-
-        log.append(build_remote_filename(merra2_collection, date, params))
+def download_merra2_nc(date, merra2_collection, output_directory, params, auth):
     final_ds = xr.Dataset()
 
     # build url
@@ -124,8 +109,10 @@ def download_merra2_nc(merra2_collection, output_directory, date, params, auth):
 
     # If you want to see the download progress, check the download folder you
     # specified
+    print("* File from Date " + str(date) + " Begin to Download")
     download_manager.start_download(NUMBER_OF_CONNECTIONS)
-    np.save(log_file, np.array(log))
+    print("* File from Date " + str(date) + " Finished Download")
+    return date
 
 
 def iter_days(first: datetime.date, last: datetime.date):
@@ -165,8 +152,40 @@ def subdaily_universal_download(
     output_directory : Union[str, Path]
 
     """
+    if not isinstance(output_directory, Path):
+        log_file = Path(output_directory)
+
+    log_file = os.path.join(log_file.parent, 'index.npy')
+    if os.path.exists(log_file):
+        log = np.load(log_file).tolist()
+    else:
+        log = []
+
+    dates = []
     for date in iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-        download_merra2_nc(merra2_collection, output_directory, date, params, auth)
+        if build_remote_filename(merra2_collection, date, params) in log:
+            print("Skipping existing file " + build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
+            continue
+        else:
+            print("Preparing new file " + build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
+            log.append(build_remote_filename(merra2_collection, date, params))
+        dates.append(date)
+
+    if len(dates) > 0:
+        print("----  Begin  Download  ----")
+        pool = multiprocessing.Pool(5)
+        rel = pool.map(
+                partial(download_merra2_nc,
+                    merra2_collection=merra2_collection,
+                    output_directory=output_directory,
+                    params=params,
+                    auth=auth), dates
+                )
+
+        for date in rel:
+            print("% New File from Date " + str(date) + " Confirmed")
+        print("---- Download Finished ----")
+    np.save(log_file, np.array(log))
 
 
 def daily_netcdf(
