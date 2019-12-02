@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "MERRA2_CSM",
-    version = "0.2",
+    version = "0.4",
     keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
     description = "Download tool for MERRA2 dataset for Clear Sky Model.",
     long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
@@ -31,7 +31,7 @@ setup(
     scripts = [],
     entry_points = {
         'console_scripts': [
-            'merra2_downloader = MERRA2_CSM.downloader.socket:run'
+            'merra2_downloader = MERRA2_CSM.downloader.socket:main'
         ]
     }
 )

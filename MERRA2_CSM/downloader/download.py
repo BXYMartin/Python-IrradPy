@@ -92,14 +92,12 @@ def build_remote_filename(merra2_collection, date, params):
         )
 
 
-def download_merra2_nc(date, merra2_collection, output_directory, params, auth):
+def download_merra2_nc(date, merra2_collection, output_directory, params, auth, connection_num):
     final_ds = xr.Dataset()
 
     # build url
     url = os.path.join(build_remote_url(merra2_collection, date),
                         build_remote_filename(merra2_collection, date, params))
-
-    NUMBER_OF_CONNECTIONS = 2
 
     # The DownloadManager class is defined in the opendap_download module.
     download_manager = DownloadManager()
@@ -110,7 +108,7 @@ def download_merra2_nc(date, merra2_collection, output_directory, params, auth):
     # If you want to see the download progress, check the download folder you
     # specified
     print("* File from Date " + str(date) + " Begin to Download")
-    download_manager.start_download(NUMBER_OF_CONNECTIONS)
+    download_manager.start_download(connection_num)
     print("* File from Date " + str(date) + " Finished Download")
     return date
 
@@ -134,6 +132,8 @@ def subdaily_universal_download(
     params: Optional[str] = None,
     auth: dict = None,
     output_directory: Union[str, Path] = None,
+    thread_num: int = 5,
+    connection_num: int = 2,
 ):
     """
     MERRA2 universal download.
@@ -150,6 +150,8 @@ def subdaily_universal_download(
     params : Optional[str]
     auth : dict,
     output_directory : Union[str, Path]
+    thread_num : int
+    connection_num : int
 
     """
     if not isinstance(output_directory, Path):
@@ -173,13 +175,15 @@ def subdaily_universal_download(
 
     if len(dates) > 0:
         print("----  Begin  Download  ----")
-        pool = multiprocessing.Pool(5)
+        pool = multiprocessing.Pool(thread_num)
         rel = pool.map(
                 partial(download_merra2_nc,
                     merra2_collection=merra2_collection,
                     output_directory=output_directory,
                     params=params,
-                    auth=auth), dates
+                    auth=auth,
+                    connection_num=connection_num,
+                    ), dates
                 )
 
         for date in rel:
@@ -426,6 +430,8 @@ def daily_download_and_convert(
     auth: dict = None,
     delete_temp_dir: bool = True,
     verbose: bool = True,
+    thread_num: Optional[int] = 5,
+    connection_num: Optional[int] = 2,
 ):
     """MERRA2 daily download and conversion.
 
@@ -475,6 +481,10 @@ def daily_download_and_convert(
         {"uid": "USERNAME", "password": "PASSWORD"}
     delete_temp_dir : bool
     verbose : bool
+    thread_num : Optional[int]
+        Number of Files to be downloaded simutanously.
+    connection_num : Optional[int]
+        Number of Connections for each file to be downloaded simutanously.
 
     Notes
     ---------
@@ -508,7 +518,6 @@ def daily_download_and_convert(
         lat_coord_2 = translate_lat_to_geos5_native(lat_2)
         lon_coord_2 = translate_lon_to_geos5_native(lon_2)
 
-
         # Find the closest coordinate in the grid.
         lat_co_1_closest = find_closest_coordinate(lat_coord_1, lat_coords)
         lon_co_1_closest = find_closest_coordinate(lon_coord_1, lon_coords)
@@ -541,6 +550,8 @@ def daily_download_and_convert(
             output_directory=temp_dir_download,
             auth=auth,
             params=parameter,
+            thread_num=thread_num,
+            connection_num=connection_num,
         )
         # Name the output file
         if initial_year == final_year:

@@ -12,8 +12,8 @@ from . import download
 def parse_args():
     desc = "Downloader Setup for GESDISC System"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('--var_names', type=str2list, default=['rad', 'slv', 'aer'], help='Select from ["rad", "slv", "aer"], predefined in downloader.variables.var_list')
-    parser.add_argument('--delete_temp', type=str2bool, default=True, help='Select from [True, False], option to delete or save original downloaded files.')
+    parser.add_argument('--var_names', type=list, default=['rad', 'slv', 'aer'], help='Select from ["rad", "slv", "aer"], predefined in downloader.variables.var_list')
+    parser.add_argument('--delete_temp', type=bool, default=True, help='Select from [True, False], option to delete or save original downloaded files.')
     parser.add_argument('--download_dir', type=str, default=os.path.join(os.getcwd(), "MERRA2_data"), help='Set the download path for all files, default value is ' + os.path.join(os.getcwd(), "MERRA2_data") + '.')
 
     parser.add_argument('--initial_year', type=int, default=(datetime.date.today() + datetime.timedelta(-1)).year, help='Select from [1980, This Year], default to the year of now.')
@@ -29,7 +29,13 @@ def parse_args():
     parser.add_argument('--bottom_left_lon', type=float, default=-180, help='Select from [-180, +180], default to -180. This is the longitude of the left bottom corner of the interest data region (which is a rectangle).')
     parser.add_argument('--top_right_lat', type=float, default=90, help='Select from [-90, +90], default to 90. This is the latitude of the top right corner of the interest data region (which is a rectangle).')
     parser.add_argument('--top_right_lon', type=float, default=180, help='Select from [-180, +180], default to 180. This is the longitude of the top right corner of the interest data region (which is a rectangle).')
+    parser.add_argument('--thread_num', type=int, default=5, help='Specify how many files to be downloaded simutaneously, recommend assign no greater than the number of threads in your CPU.')
+    parser.add_argument('--connection_num', type=int, default=2, help='Specify how many chunks in a file to be downloaded simutaneously. WARNING, the server might BAN you if this value is too large.')
     return check_args(parser.parse_args())
+
+def check_args(args):
+    # TODO: Add essential checks for input args
+    return args
 
 
 def run(
@@ -49,6 +55,8 @@ def run(
     auth: dict = None,
     delete_temp_dir: bool = True,
     verbose: bool = True,
+    thread_num: Optional[int] = 5,
+    connection_num: Optional[int] = 2,
     ):
     """MERRA2 daily download and merge function for the Clear Sky Model.
 
@@ -98,6 +106,10 @@ def run(
         {"uid": "USERNAME", "password": "PASSWORD"}
     delete_temp_dir : bool
     verbose : bool
+    thread_num : Optional[int]
+        Number of Files to be downloaded simutanously.
+    connection_num : Optional[int]
+        Number of Connections for each file to be downloaded simutanously.
 
     Notes
     ---------
@@ -118,7 +130,10 @@ def run(
         auth=auth,
         delete_temp_dir=delete_temp_dir,
         lat_1=lat_1, lon_1=lon_1,
-        lat_2=lat_2, lon_2=lon_2)
+        lat_2=lat_2, lon_2=lon_2,
+        thread_num=thread_num,
+        connection_num=connection_num
+        )
 
 
 def main():
@@ -127,7 +142,7 @@ def main():
 
     # Check If Arguments are Valid
     if args is None:
-      exit()
+        exit()
 
     print("Connecting Database...")
 
@@ -139,7 +154,8 @@ def main():
         auth={'uid': args.uid, 'password': args.password},
         delete_temp_dir=args.delete_temp,
         lat_1=args.bottom_left_lat, lon_1=args.bottom_left_lon,
-        lat_2=args.top_right_lat, lon_2=args.top_right_lon)
+        lat_2=args.top_right_lat, lon_2=args.top_right_lon,
+        thread_num=args.thread_num, connection_num=args.connection_num)
 
     print("Download and Merge Complete, merged data file available in " + args.download_dir)
 
