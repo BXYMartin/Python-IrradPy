@@ -1,7 +1,7 @@
 import datetime
 from pydap.client import open_url
 from pydap.cas.urs import setup_session
-from process import DownloadManager
+from .process import DownloadManager
 import xarray as xr
 import config
 import utils
@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import List
 from typing import Optional
 from typing import Union
-from variables import var_list
+from .variables import var_list
 
 deff4 = netCDF4.default_fillvals["f4"]
 

@@ -1,14 +1,10 @@
-import fnmatch
-import glob
 import os
-import shutil
 import sys
 import tempfile
-import download
-#import schedule
-#from time import sleep
+from . import download
 
-def test_daily_download_convert():
+
+def run():
     # var_names you want to download, links defined in variables.py
     var_names = ['rad', 'slv', 'aer']
     # whether to delete the temporary download directory (along with the original data)
@@ -39,8 +35,4 @@ def test_daily_download_convert():
 
 
 if __name__ == "__main__":
-    test_daily_download_convert()
-    # schedule.every(3).weeks.do(test_daily_download_convert)
-    # while True:
-    #     schedule.run_pending()
-    #     sleep(500000)
+    run()
