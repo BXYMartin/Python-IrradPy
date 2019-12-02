@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "MERRA2_CSM",
-    version = "0.1",
+    version = "0.2",
     keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
     description = "Download tool for MERRA2 dataset for Clear Sky Model.",
     long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
@@ -25,6 +25,7 @@ setup(
         "pathlib",
         "typing",
         "requests",
+        "argparse",
         ],
 
     scripts = [],

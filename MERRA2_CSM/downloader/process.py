@@ -140,12 +140,15 @@ class DownloadManager(object):
             authentication_url = self.download_urls[0]
             result = opener.open(authentication_url)
 
-        except urllib.error.HTTPError:
-            raise ValueError('Username and or Password are not correct!')
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                raise IndexError('Requested URL is not available.')
+            else:
+                raise ValueError('Username and or Password are not correct!')
         except IOError as e:
-            raise IOError
+            raise IOError('IO Error in Device.')
         except IndexError as e:
-            raise IndexError('download_urls is not set')
+            raise IndexError('Unknown Download URL!')
 
         return auth_cookie_jar
 

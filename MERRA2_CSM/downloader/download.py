@@ -483,47 +483,46 @@ def daily_download_and_convert(
         else:
             merra2_var_dict = merra2_var_dicts[i]
         # Download subdaily files
-        if i == 0:
-            # Translate the coordinates that define your area to grid coordinates.
-            lat_coord_1 = translate_lat_to_geos5_native(lat_1)
-            lon_coord_1 = translate_lon_to_geos5_native(lon_1)
-            lat_coord_2 = translate_lat_to_geos5_native(lat_2)
-            lon_coord_2 = translate_lon_to_geos5_native(lon_2)
+        # Translate the coordinates that define your area to grid coordinates.
+        lat_coord_1 = translate_lat_to_geos5_native(lat_1)
+        lon_coord_1 = translate_lon_to_geos5_native(lon_1)
+        lat_coord_2 = translate_lat_to_geos5_native(lat_2)
+        lon_coord_2 = translate_lon_to_geos5_native(lon_2)
 
 
-            # Find the closest coordinate in the grid.
-            lat_co_1_closest = find_closest_coordinate(lat_coord_1, lat_coords)
-            lon_co_1_closest = find_closest_coordinate(lon_coord_1, lon_coords)
-            lat_co_2_closest = find_closest_coordinate(lat_coord_2, lat_coords)
-            lon_co_2_closest = find_closest_coordinate(lon_coord_2, lon_coords)
+        # Find the closest coordinate in the grid.
+        lat_co_1_closest = find_closest_coordinate(lat_coord_1, lat_coords)
+        lon_co_1_closest = find_closest_coordinate(lon_coord_1, lon_coords)
+        lat_co_2_closest = find_closest_coordinate(lat_coord_2, lat_coords)
+        lon_co_2_closest = find_closest_coordinate(lon_coord_2, lon_coords)
 
-            requested_lat = '[{lat_1}:{lat_2}]'.format(
-                    lat_1=lat_co_1_closest, lat_2=lat_co_2_closest
-                )
-            requested_lon = '[{lon_1}:{lon_2}]'.format(
-                    lon_1=lon_co_1_closest, lon_2=lon_co_2_closest
-                )
-
-            if isinstance(merra2_var_dict['merra_name'], list):
-                requested_params = merra2_var_dict['merra_name']
-            else:
-                requested_params = [merra2_var_dict['merra_name']]
-            requested_time = '[0:23]'
-            parameter = generate_url_params(requested_params, requested_time,
-                                                    requested_lat, requested_lon)
-
-            subdaily_universal_download(
-                merra2_var_dict,
-                initial_year,
-                final_year,
-                initial_month=initial_month,
-                final_month=final_month,
-                initial_day=initial_day,
-                final_day=final_day,
-                output_directory=temp_dir_download,
-                auth=auth,
-                params=parameter,
+        requested_lat = '[{lat_1}:{lat_2}]'.format(
+                lat_1=lat_co_1_closest, lat_2=lat_co_2_closest
             )
+        requested_lon = '[{lon_1}:{lon_2}]'.format(
+                lon_1=lon_co_1_closest, lon_2=lon_co_2_closest
+            )
+
+        if isinstance(merra2_var_dict['merra_name'], list):
+            requested_params = merra2_var_dict['merra_name']
+        else:
+            requested_params = [merra2_var_dict['merra_name']]
+        requested_time = '[0:23]'
+        parameter = generate_url_params(requested_params, requested_time,
+                                                requested_lat, requested_lon)
+
+        subdaily_universal_download(
+            merra2_var_dict,
+            initial_year,
+            final_year,
+            initial_month=initial_month,
+            final_month=final_month,
+            initial_day=initial_day,
+            final_day=final_day,
+            output_directory=temp_dir_download,
+            auth=auth,
+            params=parameter,
+        )
         # Name the output file
         if initial_year == final_year:
             file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
