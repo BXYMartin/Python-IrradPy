@@ -1,5 +1,5 @@
 # Python-MERRA2
-Python script to download data from gesdisc.eosdis.nasa.gov
+Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
 
 ## Functions
 * Skip already downloaded files.
@@ -8,14 +8,6 @@ Python script to download data from gesdisc.eosdis.nasa.gov
 
 ## Usage
 ### Setup authentication
-``` bash
-cd ~
-touch .netrc         # Create File
-chmod 0600 .netrc    # Fix Permission
-echo "machine urs.earthdata.nasa.gov login USERNAME password PASSWORD" >> .netrc
-                     # Save Authentication
-touch .urs_cookies
-```
 
 ### Project structure
 |   File Name   |            Purpose             |
@@ -26,16 +18,7 @@ touch .urs_cookies
 
 ### Directory
 ```
-.
-├── download.py
-├── resources
-│   ├── index.npy (log download status)
-│   ├── FIELD_day_merra2_reanalysis_2015.nc4 (storage data for specific FIELD)
-├── test.py
-└── variables.py
 ```
 ### Run
 ``` bash
-cd PROJECT_DIRECTORY
-python test.py
 ```
