@@ -1,4 +1,4 @@
-# Python-MERRA2
+# ClearSkyPy
 Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
 
 ## Functions
@@ -19,10 +19,10 @@ Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
 ### Usage
 #### Use inside Python Script
 ``` python
-import MERRA2_CSM
+import clearskypy
 
 # Run Downloader
-MERRA2_CSM.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
+clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
 ```
 
 ``` python
@@ -80,7 +80,7 @@ MERRA2_CSM.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
 
 #### Run Package From Shell
 ``` bash
-python -m MERRA2_CSM.downloader.socket --uid USERNAME --password PASSWORD
+python -m clearskypy.downloader.socket --uid USERNAME --password PASSWORD
 
 usage: socket.py [-h] [--var_names VAR_NAMES] [--delete_temp DELETE_TEMP]
                  [--download_dir DOWNLOAD_DIR] [--initial_year INITIAL_YEAR]
@@ -149,7 +149,7 @@ Still working on it...
 └─ MERRA2_data
    ├── index.npy                            // logs for downloaded files
    ├── xxx_xxx_merra2_reanalysis_xxxx.nc    // merged file
-   └── tmp739hrju3                          // temp directory
+   └── tmpxxxxxxxx                          // temp directory
        └── MERRA2_400.xxx.xxx.nc4.nc        // original files
 ```
 ### Install
