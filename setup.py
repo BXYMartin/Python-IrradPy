@@ -68,7 +68,7 @@ if __name__ == "__main__":
         cmdclass = {'test': DiscoverTest},
         entry_points = {
             'console_scripts': [
-                'merra2_downloader = MERRA2_CSM.downloader.socket:main'
+                'merra2_downloader = clearskypy.downloader.socket:main'
             ]
         }
     )
