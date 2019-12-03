@@ -122,20 +122,21 @@ usage: socket.py [-h] [--collection_names VAR_NAMES] [--delete_temp DELETE_TEMP]
 ``` bash
 merra2_downloader --uid USERNAME --password PASSWORD
 
-usage: merra2_downloader [-h] [--collection_names VAR_NAMES]
+usage: merra2_downloader [-h] --uid UID --password PASSWORD
+                         [--collection_names COLLECTION_NAMES]
                          [--delete_temp DELETE_TEMP]
                          [--download_dir DOWNLOAD_DIR]
                          [--initial_year INITIAL_YEAR]
                          [--initial_month INITIAL_MONTH]
                          [--initial_day INITIAL_DAY] [--final_year FINAL_YEAR]
                          [--final_month FINAL_MONTH] [--final_day FINAL_DAY]
-                         --uid UID [--password PASSWORD]
                          [--bottom_left_lat BOTTOM_LEFT_LAT]
                          [--bottom_left_lon BOTTOM_LEFT_LON]
                          [--top_right_lat TOP_RIGHT_LAT]
                          [--top_right_lon TOP_RIGHT_LON]
                          [--thread_num THREAD_NUM]
                          [--connection_num CONNECTION_NUM]
+merra2_downloader: the following arguments are required: --uid, --password
 ```
 
 #### Test Case
@@ -161,16 +162,23 @@ Still working on it...
 #### Package
 ```
 .
-├── MERRA2_CSM
+├── clearskypy
 │   ├── __init__.py
-│   └── downloader
+│   ├── downloader
+│   │   ├── __init__.py
+│   │   ├── download.py
+│   │   ├── process.py
+│   │   ├── socket.py
+│   │   └── variables.py
+│   └── extractor
 │       ├── __init__.py
-│       ├── download.py
-│       ├── process.py
-│       ├── socket.py
-│       └── variables.py
+│       └── extract.py
 ├── README.md
-└── setup.py
+├── setup.py
+├── example
+│   └── example_downloader.py
+└── test
+    └── test_downloader.py
 ```
 #### Download Directory
 ```
@@ -179,7 +187,7 @@ Still working on it...
    ├── index.npy                            // logs for downloaded files
    ├── xxx_xxx_merra2_reanalysis_xxxx.nc    // merged file
    └── tmpxxxxxxxx                          // temp directory
-       └── MERRA2_400.xxx.xxx.nc4.nc        // original files
+       └── MERRA2_nnn.xxx.xxx.nc4.nc        // original files
 ```
 ### Install
 With source code:
@@ -188,5 +196,5 @@ python setup.py install
 ```
 With python package:
 ``` bash
-pip install xxx
+pip install -i https://test.pypi.org/simple/ ClearSkyPy
 ```
