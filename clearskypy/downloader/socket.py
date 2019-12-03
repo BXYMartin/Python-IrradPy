@@ -3,6 +3,7 @@ import sys
 import tempfile
 import argparse
 import datetime
+import multiprocessing
 from typing import List
 from typing import Optional
 from typing import Union
@@ -162,4 +163,5 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()
