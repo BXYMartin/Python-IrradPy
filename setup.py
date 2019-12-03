@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 from setuptools.command.test import test
+from multiprocessing import freeze_support
 import os
 import sys
 import unittest
@@ -31,40 +32,43 @@ class DiscoverTest(test):
     def run_tests(self):
         discover_and_run_tests()
 
-setup(
-    name = "MERRA2_CSM",
-    version = "1.0",
-    keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
-    description = "Download tool for MERRA2 dataset for Clear Sky Model.",
-    long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
-    license = "MIT Licence",
 
-    url = "Not Available",
-    author = "Jamie Bright, Yue Zhang, Martin Bai",
-    author_email = "Not Available",
+if __name__ == "__main__":
+    freeze_support()
+    setup(
+        name = "MERRA2_CSM",
+        version = "1.0",
+        keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
+        description = "Download tool for MERRA2 dataset for Clear Sky Model.",
+        long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
+        license = "MIT Licence",
 
-    packages = find_packages(exclude=['test']),
-    include_package_data = True,
-    platforms = "any",
-    install_requires = [
-        "pydap",
-        "xarray",
-        "config",
-        "scipy",
-        "utils",
-        "netCDF4",
-        "numpy",
-        "pathlib",
-        "typing",
-        "requests",
-        "argparse",
-        ],
+        url = "Not Available",
+        author = "Jamie Bright, Yue Zhang, Martin Bai",
+        author_email = "Not Available",
 
-    scripts = [],
-    cmdclass = {'test': DiscoverTest},
-    entry_points = {
-        'console_scripts': [
-            'merra2_downloader = MERRA2_CSM.downloader.socket:main'
-        ]
-    }
-)
+        packages = find_packages(exclude=['test']),
+        include_package_data = True,
+        platforms = "any",
+        install_requires = [
+            "pydap",
+            "xarray",
+            "config",
+            "scipy",
+            "utils",
+            "netCDF4",
+            "numpy",
+            "pathlib",
+            "typing",
+            "requests",
+            "argparse",
+            ],
+
+        scripts = [],
+        cmdclass = {'test': DiscoverTest},
+        entry_points = {
+            'console_scripts': [
+                'merra2_downloader = MERRA2_CSM.downloader.socket:main'
+            ]
+        }
+    )
