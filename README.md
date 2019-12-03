@@ -49,7 +49,7 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
 ``` python
     Parameters
     
-    var_names : List[str]
+    collection_names : List[str]
         Variable short names, must be defined in variables.py
         if merra2_var_dict is not provided. If more than one variable,
         they are assumed to have the same original files and those will only
@@ -85,8 +85,8 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
         Select a value from [-180, +180]
     merra2_var_dicts : Optional[List[dict]]
         Dictionary containing the following keys:
-        esdt_dir, collection, merra_name, standard_name,
-        see the Bosilovich paper for details. Same order as var_names.
+        esdt_dir, collection, var_name, standard_name,
+        see the Bosilovich paper for details. Same order as collection_names.
     output_dir : Union[str, Path]
     auth : dict
         Dictionary contains login information.
@@ -103,7 +103,7 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
 ``` bash
 python -m clearskypy.downloader.socket --uid USERNAME --password PASSWORD
 
-usage: socket.py [-h] [--var_names VAR_NAMES] [--delete_temp DELETE_TEMP]
+usage: socket.py [-h] [--collection_names VAR_NAMES] [--delete_temp DELETE_TEMP]
                  [--download_dir DOWNLOAD_DIR] [--initial_year INITIAL_YEAR]
                  [--initial_month INITIAL_MONTH] [--initial_day INITIAL_DAY]
                  [--final_year FINAL_YEAR] [--final_month FINAL_MONTH]
@@ -119,7 +119,7 @@ usage: socket.py [-h] [--var_names VAR_NAMES] [--delete_temp DELETE_TEMP]
 ``` bash
 merra2_downloader --uid USERNAME --password PASSWORD
 
-usage: merra2_downloader [-h] [--var_names VAR_NAMES]
+usage: merra2_downloader [-h] [--collection_names VAR_NAMES]
                          [--delete_temp DELETE_TEMP]
                          [--download_dir DOWNLOAD_DIR]
                          [--initial_year INITIAL_YEAR]

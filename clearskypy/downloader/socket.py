@@ -13,7 +13,7 @@ from . import download
 def parse_args():
     desc = "Downloader Setup for GESDISC System"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('--var_names', type=list, default=['rad', 'slv', 'aer'], help='Select from ["rad", "slv", "aer"], predefined in downloader.variables.var_list')
+    parser.add_argument('--collection_names', type=list, default=['rad', 'slv', 'aer', 'asm'], help='Select from ["rad", "slv", "aer", "asm"], predefined in downloader.variables.var_list')
     parser.add_argument('--delete_temp', type=bool, default=True, help='Select from [True, False], option to delete or save original downloaded files.')
     parser.add_argument('--download_dir', type=str, default=os.path.join(os.getcwd(), "MERRA2_data"), help='Set the download path for all files, default value is ' + os.path.join(os.getcwd(), "MERRA2_data") + '.')
 
@@ -40,7 +40,7 @@ def check_args(args):
 
 
 def run(
-    var_names: Optional[List[str]] = ['rad', 'slv', 'aer'],
+    collection_names: Optional[List[str]] = ['rad', 'slv', 'aer', 'asm'],
     initial_year: Optional[int] = (datetime.date.today() + datetime.timedelta(-1)).year,
     final_year: Optional[int] = (datetime.date.today() + datetime.timedelta(-1)).year,
     initial_month: Optional[int] = (datetime.date.today() + datetime.timedelta(-1)).month,
@@ -63,7 +63,7 @@ def run(
 
     Parameters
     ----------
-    var_names : List[str]
+    collection_names : List[str]
         Variable short names, must be defined in variables.py
         if merra2_var_dict is not provided. If more than one variable,
         they are assumed to have the same original files and those will only
@@ -99,8 +99,8 @@ def run(
         Select a value from [-180, +180]
     merra2_var_dicts : Optional[List[dict]]
         Dictionary containing the following keys:
-        esdt_dir, collection, merra_name, standard_name,
-        see the Bosilovich paper for details. Same order as var_names.
+        esdt_dir, collection, var_name, standard_name,
+        see the Bosilovich paper for details. Same order as collection_names.
     output_dir : Union[str, Path]
     auth : dict
         Dictionary contains login information.
@@ -124,7 +124,7 @@ def run(
 
     # Call the main function
     download.daily_download_and_convert(
-        var_names, merra2_var_dicts=None,
+        collection_names, merra2_var_dicts=None,
         initial_year=initial_year, initial_month=initial_month, initial_day=initial_day,
         final_year=final_year, final_month=final_month, final_day=final_day,
         output_dir=output_dir,
@@ -148,7 +148,7 @@ def main():
     print("Connecting Database...")
 
     download.daily_download_and_convert(
-        args.var_names, merra2_var_dicts=None,
+        args.collection_names, merra2_var_dicts=None,
         initial_year=args.initial_year, initial_month=args.initial_month, initial_day=args.initial_day,
         final_year=args.final_year, final_month=args.final_month, final_day=args.final_day,
         output_dir=args.download_dir,

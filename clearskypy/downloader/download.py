@@ -69,26 +69,50 @@ def find_closest_coordinate(calc_coord, coord_array):
 
 # function to build the database url
 def build_remote_url(merra2_collection, date):
-    return (
-        ('https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/MERRA2/'
-         '{db_name}/{date:%Y}/{date:%m}/')
-         .format(db_name=merra2_collection["esdt_dir"],
-                 date=date)
-    )
-
-# function to build the database file name
-def build_remote_filename(merra2_collection, date, params):
-    if params is not None:
+    if merra2_collection["collection"].startswith("const"):
         return (
-            'MERRA2_400.{abbrv}.{date:%Y%m%d}.nc4.nc?{params}'
-            .format(abbrv=merra2_collection["collection"],
-                    date=date, params=params)
+            ('https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/MERRA2_MONTHLY/'
+             '{db_name}/1980/')
+             .format(db_name=merra2_collection["esdt_dir"])
         )
     else:
         return (
-            'MERRA2_400.{abbrv}.{date:%Y%m%d}.nc4'
-            .format(abbrv=merra2_collection["collection"],
-                    date=date, params=params)
+            ('https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/MERRA2/'
+             '{db_name}/{date:%Y}/{date:%m}/')
+             .format(db_name=merra2_collection["esdt_dir"],
+                     date=date)
+        )
+
+# function to build the database file name
+def build_remote_filename(merra2_collection, date, params):
+    merra_stream = "400"
+    file_extension = "nc"
+    date_string = '{date:%Y%m%d}'.format(date=date)
+    if date.year < 1992:
+        merra_stream = "100"
+    elif date.year < 2001:
+        merra_stream = "200"
+    elif date.year < 2011:
+        merra_stream = "300"
+
+    if merra2_collection["collection"].startswith("const"):
+        merra_stream = "101"
+        date_string = "00000000"
+        file_extension = "nc4"
+
+    if params is not None:
+        return (
+            'MERRA2_{stream}.{abbrv}.{date}.nc4.{ext}?{params}'
+            .format(stream=merra_stream,
+                    abbrv=merra2_collection["collection"],
+                    date=date_string, params=params, ext=file_extension)
+        )
+    else:
+        return (
+            'MERRA2_{stream}.{abbrv}.{date}.nc4'
+            .format(stream=merra_stream,
+                    abbrv=merra2_collection["collection"],
+                    date=date_string, params=params)
         )
 
 
@@ -195,7 +219,7 @@ def subdaily_universal_download(
 def daily_netcdf(
     path_data: Union[str, Path],
     output_file: Union[str, Path],
-    var_name: str,
+    collection_name: str,
     initial_year: int,
     final_year: int,
     merra2_var_dict: Optional[dict] = None,
@@ -207,12 +231,12 @@ def daily_netcdf(
     ----------
     path_data : Union[str, Path]
     output_file : Union[str, Path]
-    var_name : str
+    collection_name : str
     initial_year : int
     final_year : int
     merra2_var_dict : Optional[dict]
         Dictionary containing the following keys:
-        esdt_dir, collection, merra_name, standard_name,
+        esdt_dir, collection, var_name, standard_name,
         see the Bosilovich paper for details.
     verbose : bool
 
@@ -221,7 +245,7 @@ def daily_netcdf(
         path_data = Path(path_data)
 
     if not merra2_var_dict:
-        merra2_var_dict = var_list[var_name]
+        merra2_var_dict = var_list[collection_name]
 
     search_str = "*{0}*.nc4*".format(merra2_var_dict["collection"])
     nc_files = [str(f) for f in path_data.rglob(search_str)]
@@ -253,16 +277,16 @@ def daily_netcdf(
 
     if len(relevant_files) == 0:
         if verbose:
-            print(str(merra2_var_dict["merra_name"]) + " data files have been downloaded and merged for " + var_name + ".")
+            print(str(merra2_var_dict["var_name"]) + " data files have been downloaded and merged for " + collection_name + ".")
         return
     nc_reference = netCDF4.Dataset(relevant_files[0], "r")
 
-    if isinstance(merra2_var_dict["merra_name"], list):
+    if isinstance(merra2_var_dict["var_name"], list):
         var_ref = {}
-        for name in merra2_var_dict["merra_name"]:
+        for name in merra2_var_dict["var_name"]:
             var_ref[name] = nc_reference.variables[name]
     else:
-        var_ref = nc_reference.variables[merra2_var_dict["merra_name"]]
+        var_ref = nc_reference.variables[merra2_var_dict["var_name"]]
     nc_file = output_file
     now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     nc1 = netCDF4.Dataset(nc_file, "w", format="NETCDF4_CLASSIC")
@@ -351,9 +375,9 @@ def daily_netcdf(
 
     least_digit = merra2_var_dict.get("least_significant_digit", None)
 
-    if isinstance(merra2_var_dict["merra_name"], list):
+    if isinstance(merra2_var_dict["var_name"], list):
         var1 = {}
-        for name in merra2_var_dict["merra_name"]:
+        for name in merra2_var_dict["var_name"]:
             var1[name] = nc1.createVariable(
                 name,
                 "f4",
@@ -367,7 +391,7 @@ def daily_netcdf(
             var1[name].standard_name = merra2_var_dict["standard_name"]
     else:
         var1 = nc1.createVariable(
-            merra2_var_dict["merra_name"],
+            merra2_var_dict["var_name"],
             "f4",
             ("time", "lat", "lon"),
             zlib=True,
@@ -380,9 +404,9 @@ def daily_netcdf(
 
     nc_reference.close()
 
-    if isinstance(merra2_var_dict["merra_name"], list):
+    if isinstance(merra2_var_dict["var_name"], list):
         t = {}
-        for name in merra2_var_dict["merra_name"]:
+        for name in merra2_var_dict["var_name"]:
             t[name] = 0
     else:
         t = 0
@@ -390,17 +414,17 @@ def daily_netcdf(
         if verbose:
             print(nc_file)
         nc = netCDF4.Dataset(nc_file, "r")
-        if isinstance(merra2_var_dict["merra_name"], list):
+        if isinstance(merra2_var_dict["var_name"], list):
             ncvar = {}
-            for name in merra2_var_dict["merra_name"]:
+            for name in merra2_var_dict["var_name"]:
                 ncvar[name] = nc.variables[name]
         else:
-            ncvar = nc.variables[merra2_var_dict["merra_name"]]
+            ncvar = nc.variables[merra2_var_dict["var_name"]]
         nctime = nc.variables["time"]
         ncdatetime = netCDF4.num2date(nctime[:], nctime.units)
         nctime_1980 = np.round(netCDF4.date2num(ncdatetime, time.units))
-        if isinstance(merra2_var_dict["merra_name"], list):
-            for name in merra2_var_dict["merra_name"]:
+        if isinstance(merra2_var_dict["var_name"], list):
+            for name in merra2_var_dict["var_name"]:
                 var1[name][t[name] : t[name] + ncvar[name].shape[0], :, :] = ncvar[name][:, :, :]
                 time[t[name] : t[name] + ncvar[name].shape[0]] = nctime_1980[:]
                 t[name] += ncvar[name].shape[0]
@@ -414,7 +438,7 @@ def daily_netcdf(
 
 
 def daily_download_and_convert(
-    var_names: List[str],
+    collection_names: List[str],
     initial_year: int,
     final_year: Optional[int] = datetime.datetime.now().year,
     initial_month: int = 1,
@@ -437,7 +461,7 @@ def daily_download_and_convert(
 
     Parameters
     ----------
-    var_names : List[str]
+    collection_names : List[str]
         Variable short names, must be defined in variables.py
         if merra2_var_dict is not provided. If more than one variable,
         they are assumed to have the same original files and those will only
@@ -473,8 +497,8 @@ def daily_download_and_convert(
         Select a value from [-180, +180]
     merra2_var_dicts : Optional[List[dict]]
         Dictionary containing the following keys:
-        esdt_dir, collection, merra_name, standard_name,
-        see the Bosilovich paper for details. Same order as var_names.
+        esdt_dir, collection, var_name, standard_name,
+        see the Bosilovich paper for details. Same order as collection_names.
     output_dir : Union[str, Path]
     auth : dict
         Dictionary contains login information.
@@ -506,9 +530,9 @@ def daily_download_and_convert(
         output_dir = str(output_dir)
 
     temp_dir_download = tempfile.mkdtemp(dir=output_dir)
-    for i, var_name in enumerate(var_names):
+    for i, collection_name in enumerate(collection_names):
         if not merra2_var_dicts:
-            merra2_var_dict = var_list[var_name]
+            merra2_var_dict = var_list[collection_name]
         else:
             merra2_var_dict = merra2_var_dicts[i]
         # Download subdaily files
@@ -531,11 +555,15 @@ def daily_download_and_convert(
                 lon_1=lon_co_1_closest, lon_2=lon_co_2_closest
             )
 
-        if isinstance(merra2_var_dict['merra_name'], list):
-            requested_params = merra2_var_dict['merra_name']
+        if isinstance(merra2_var_dict['var_name'], list):
+            requested_params = merra2_var_dict['var_name']
         else:
-            requested_params = [merra2_var_dict['merra_name']]
-        requested_time = '[0:23]'
+            requested_params = [merra2_var_dict['var_name']]
+
+        if merra2_var_dict["collection"].startswith("const"):
+            requested_time = '[0:0]'
+        else:
+            requested_time = '[0:23]'
         parameter = generate_url_params(requested_params, requested_time,
                                                 requested_lat, requested_lon)
 
@@ -556,18 +584,18 @@ def daily_download_and_convert(
         # Name the output file
         if initial_year == final_year:
             file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
-            out_file_name = file_name_str.format(var_name, merra2_var_dict["esdt_dir"], str(initial_year))
+            out_file_name = file_name_str.format(collection_name, merra2_var_dict["esdt_dir"], str(initial_year))
         else:
             file_name_str = "{0}_{1}_merra2_reanalysis_{2}-{3}.nc"
             out_file_name = file_name_str.format(
-                var_name, merra2_var_dict["esdt_dir"], str(initial_year), str(final_year)
+                collection_name, merra2_var_dict["esdt_dir"], str(initial_year), str(final_year)
             )
         out_file = Path(output_dir).joinpath(out_file_name)
         # Extract variable
         daily_netcdf(
             temp_dir_download,
             out_file,
-            var_name,
+            collection_name,
             initial_year,
             final_year,
             verbose=verbose,
