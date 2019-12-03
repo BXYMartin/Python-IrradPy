@@ -13,6 +13,8 @@ from . import download
 def parse_args():
     desc = "Downloader Setup for GESDISC System"
     parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('--uid', type=str, required=True, help='Username for GESDISC authentication.')
+    parser.add_argument('--password', type=str, required=True, help='Password for GESDISC authentication.')
     parser.add_argument('--collection_names', type=list, default=['rad', 'slv', 'aer', 'asm'], help='Select from ["rad", "slv", "aer", "asm"], predefined in downloader.variables.var_list')
     parser.add_argument('--delete_temp', type=bool, default=True, help='Select from [True, False], option to delete or save original downloaded files.')
     parser.add_argument('--download_dir', type=str, default=os.path.join(os.getcwd(), "MERRA2_data"), help='Set the download path for all files, default value is ' + os.path.join(os.getcwd(), "MERRA2_data") + '.')
@@ -23,8 +25,6 @@ def parse_args():
     parser.add_argument('--final_year', type=int, default=(datetime.date.today() + datetime.timedelta(-1)).year, help='Select from [initial_year, This Year], default to the year of now.')
     parser.add_argument('--final_month', type=int, default=(datetime.date.today() + datetime.timedelta(-1)).month, help='Select from [1, 12], default to the month of now.')
     parser.add_argument('--final_day', type=int, default=(datetime.date.today() + datetime.timedelta(-1)).day, help='Select from [1, Total days of the Month Selected], default to yesterday.')
-    parser.add_argument('--uid', type=str, required=True, help='Username for GESDISC authentication.')
-    parser.add_argument('--password', type=str, help='Password for GESDISC authentication.')
 
     parser.add_argument('--bottom_left_lat', type=float, default=-90, help='Select from [-90, +90], default to -90. This is the latitude of the left bottom corner of the interest data region (which is a rectangle).')
     parser.add_argument('--bottom_left_lon', type=float, default=-180, help='Select from [-180, +180], default to -180. This is the longitude of the left bottom corner of the interest data region (which is a rectangle).')
@@ -55,7 +55,7 @@ def run(
     output_dir: Optional[Union[str, Path]] = os.path.join(os.getcwd(), "MERRA2_data"),
     auth: dict = None,
     delete_temp_dir: bool = True,
-    verbose: bool = True,
+    verbose: bool = False,
     thread_num: Optional[int] = 5,
     connection_num: Optional[int] = 2,
     ):
