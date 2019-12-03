@@ -19,11 +19,21 @@ Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
 ### Usage
 #### Use inside Python Script
 ``` python
+# Linux and Unix Users
 import clearskypy
-
 # Run Downloader
 clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
 
+
+# Windows Users Only:
+import clearskypy
+import multiprocessing
+# Important Note: If you're using windows, make sure to wrap the function.
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
+    
+# More Examples
 # Download All Data From 2018-01-01 To 2018-01-02
 clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
     initial_year=2018, final_year=2018,
