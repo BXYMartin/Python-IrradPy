@@ -1,5 +1,9 @@
 # ClearSkyPy
 [![Build Status](https://travis-ci.org/BXYMartin/Python-ClearSkyPy.svg?branch=master)](https://travis-ci.org/BXYMartin/Python-ClearSkyPy)
+[![Latest Version][mdversion-button]][md-pypi]
+
+[mdversion-button]: https://img.shields.io/github/v/release/BXYMartin/Python-ClearSkyPy
+[md-pypi]: https://test.pypi.org/project/ClearSkyPy/
 
 Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
 
