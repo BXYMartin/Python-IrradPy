@@ -23,6 +23,17 @@ import clearskypy
 
 # Run Downloader
 clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
+
+# Download All Data From 2018-01-01 To 2018-01-02
+clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
+    initial_year=2018, final_year=2018,
+    initial_month=1, final_month=1,
+    initial_day=1, final_day=2,
+    lat_1=-90, lat_2=90,
+    lon_1=-180, lon_2=180,
+    delete_temp_dir=True, verbose=True,
+    thread_num=20, connection_num=2
+    )
 ```
 
 ``` python
