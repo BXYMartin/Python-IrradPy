@@ -135,6 +135,11 @@ usage: merra2_downloader [-h] [--var_names VAR_NAMES]
                          [--connection_num CONNECTION_NUM]
 ```
 
+#### Test Case
+``` bash
+python setup.py test
+```
+
 ### Project structure
 #### Downloader Module
 |   File Name   |            Purpose             |
