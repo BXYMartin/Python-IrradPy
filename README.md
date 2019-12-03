@@ -123,6 +123,9 @@ usage: merra2_downloader [-h] [--var_names VAR_NAMES]
 |   `socket.py`   |    wrapper for downloader   
 |   `process.py`|  wrapped download class |
 
+#### Extractor Module
+Still working on it...
+
 #### To Be Continue...
 
 ### Directory
