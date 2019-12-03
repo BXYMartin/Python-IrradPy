@@ -1,7 +1,5 @@
 language: python
 python:
-  - "3.4"
-  - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
@@ -12,4 +10,5 @@ install:
   - python setup.py install
 # command to run tests
 script:
-  - pytest
+  - python -m clearskypy.downloader.socket
+  - merra2_downloader
