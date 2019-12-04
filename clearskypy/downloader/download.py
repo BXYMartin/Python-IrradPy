@@ -286,6 +286,13 @@ class SocketManager:
         if not merra2_var_dict:
             merra2_var_dict = var_list[collection_name]
 
+        if merra2_var_dict["collection"].startswith("const"):
+            search_str = "*{0}*.nc4".format(merra2_var_dict["collection"])
+            nc_files = [str(f) for f in path_data.rglob(search_str)]
+            for f in nc_files:
+                shutil.copy(f, path_data.parent)
+            return
+
         search_str = "*{0}*.nc4*".format(merra2_var_dict["collection"])
         nc_files = [str(f) for f in path_data.rglob(search_str)]
         if os.path.exists(output_file) and len(os.listdir(path_data)) != 0:
@@ -630,6 +637,7 @@ class SocketManager:
                     collection_name,
                     initial_year,
                     final_year,
+                    merra2_var_dict
                 )
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
