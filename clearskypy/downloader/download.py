@@ -628,4 +628,6 @@ class SocketManager:
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
             if self.global_retry:
-                ans = input("Requested Data Partially Downloaded, Press ENTER To Retry Downloading Failed Ones... (CTRL+C TO ABORT)")
+                ans = input("Requested Data Partially Downloaded, Press [y]/n To Retry Downloading Or Abort...")
+                if ans != "y":
+                    self.global_retry = False
