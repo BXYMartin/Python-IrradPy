@@ -35,15 +35,8 @@ class test_downloader(unittest.TestCase):
         # impose a limit
         self.thread_num = 20
 
-        # specify the number of connections to each file
-        # we know that GESDISC does not allow too many connections, we recommend leaving at 1.
-        self.connection_num = 1
-
         # specify whether or not to delete the temporary data [True/False]
         self.delete_temp_dir = True
-
-        # specify whether to print more detail to the console
-        self.verbose = True
 
         # specify the output destination of the data, depending on operating system changes the file separator
         # default location is where you run the script, specify here if you want to change it using os.join.
@@ -92,9 +85,7 @@ class test_downloader(unittest.TestCase):
             lon_1=self.lon_1,
             lon_2=self.lon_2,
             delete_temp_dir=self.delete_temp_dir,
-            verbose=self.verbose,
             thread_num=self.thread_num,
-            connection_num=self.connection_num,
             merra2_var_dicts=self.merra2_var_dicts,
             output_dir=self.output_dir
         )

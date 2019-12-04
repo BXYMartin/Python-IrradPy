@@ -8,7 +8,8 @@ from typing import List
 from typing import Optional
 from typing import Union
 from pathlib import Path
-from . import download
+from .download import SocketManager
+
 
 def parse_args():
     desc = "Downloader Setup for GESDISC System"
@@ -31,7 +32,6 @@ def parse_args():
     parser.add_argument('--top_right_lat', type=float, default=90, help='Select from [-90, +90], default to 90. This is the latitude of the top right corner of the interest data region (which is a rectangle).')
     parser.add_argument('--top_right_lon', type=float, default=180, help='Select from [-180, +180], default to 180. This is the longitude of the top right corner of the interest data region (which is a rectangle).')
     parser.add_argument('--thread_num', type=int, default=5, help='Specify how many files to be downloaded simutaneously, recommend assign no greater than the number of threads in your CPU.')
-    parser.add_argument('--connection_num', type=int, default=2, help='Specify how many chunks in a file to be downloaded simutaneously. WARNING, the server might BAN you if this value is too large.')
     return check_args(parser.parse_args())
 
 def check_args(args):
@@ -55,9 +55,7 @@ def run(
     output_dir: Optional[Union[str, Path]] = os.path.join(os.getcwd(), "MERRA2_data"),
     auth: dict = None,
     delete_temp_dir: bool = True,
-    verbose: bool = False,
     thread_num: Optional[int] = 5,
-    connection_num: Optional[int] = 2,
     ):
     """MERRA2 daily download and merge function for the Clear Sky Model.
 
@@ -106,11 +104,8 @@ def run(
         Dictionary contains login information.
         {"uid": "USERNAME", "password": "PASSWORD"}
     delete_temp_dir : bool
-    verbose : bool
     thread_num : Optional[int]
         Number of Files to be downloaded simutanously.
-    connection_num : Optional[int]
-        Number of Connections for each file to be downloaded simutanously.
 
     Notes
     ---------
@@ -123,7 +118,8 @@ def run(
         return
 
     # Call the main function
-    download.daily_download_and_convert(
+    socket = SocketManager()
+    socket.daily_download_and_convert(
         collection_names, merra2_var_dicts=None,
         initial_year=initial_year, initial_month=initial_month, initial_day=initial_day,
         final_year=final_year, final_month=final_month, final_day=final_day,
@@ -133,7 +129,6 @@ def run(
         lat_1=lat_1, lon_1=lon_1,
         lat_2=lat_2, lon_2=lon_2,
         thread_num=thread_num,
-        connection_num=connection_num
         )
 
 
@@ -145,9 +140,9 @@ def main():
     if args is None:
         exit()
 
-    print("Connecting Database...")
+    socket = SocketManager()
 
-    download.daily_download_and_convert(
+    socket.daily_download_and_convert(
         args.collection_names, merra2_var_dicts=None,
         initial_year=args.initial_year, initial_month=args.initial_month, initial_day=args.initial_day,
         final_year=args.final_year, final_month=args.final_month, final_day=args.final_day,
@@ -156,10 +151,7 @@ def main():
         delete_temp_dir=args.delete_temp,
         lat_1=args.bottom_left_lat, lon_1=args.bottom_left_lon,
         lat_2=args.top_right_lat, lon_2=args.top_right_lon,
-        thread_num=args.thread_num, connection_num=args.connection_num)
-
-    print("Download and Merge Complete, merged data file available in " + args.download_dir)
-
+        thread_num=args.thread_num)
 
 
 if __name__ == "__main__":

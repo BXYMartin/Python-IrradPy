@@ -1,4 +1,3 @@
-from multiprocessing.dummy import Pool as Threadpool
 import requests
 import os
 import urllib.response
@@ -11,21 +10,21 @@ class DownloadManager(object):
     __AUTHENTICATION_URL = 'https://urs.earthdata.nasa.gov/oauth/authorize'
     __username = ''
     __password = ''
-    __download_urls = []
+    __download_url = ''
     __download_path = ''
     _authenticated_session = None
 
-    def __init__(self, username='', password='', links=None, download_path='download'):
+    def __init__(self, username='', password='', link=None, download_path='download'):
         self.set_username_and_password(username, password)
-        self.download_urls = links
+        self.download_url = link
         self.download_path = download_path
 
     @property
-    def download_urls(self):
-        return self.__download_urls
+    def download_url(self):
+        return self.__download_url
 
-    @download_urls.setter
-    def download_urls(self, links):
+    @download_url.setter
+    def download_url(self, link):
         """
         Setter for the links to download. The links have to be an array containing the URLs. The module will
         figure out the filename from the url and save it to the folder provided with download_path()
@@ -34,15 +33,14 @@ class DownloadManager(object):
         """
         # TODO: Check if links have the right structure? Read filename from links?
         # Check if all links are formed properly
-        if links is None:
-            self.__download_urls = []
+        if link is None:
+            self.__download_url = ''
         else:
-            for item in links:
-                try:
-                    self.get_filename(item)
-                except AttributeError:
-                    raise ValueError('The URL seems to not have the right structure: ', item)
-            self.__download_urls = links
+            try:
+                self.get_filename(link)
+            except AttributeError:
+                raise ValueError('The URL seems to not have the right structure: ', item)
+            self.__download_url = link
 
     @property
     def download_path(self):
@@ -65,20 +63,15 @@ class DownloadManager(object):
         :rtype:
         """
         query = url_item
-        print(self.download_path)
         file_path = os.path.join(self.download_path, self.get_filename(query))
         self.__download_and_save_file(query, file_path)
 
-    def start_download(self, nr_of_threads=4):
+    def start_download(self):
         if self._authenticated_session is None:
             self._authenticated_session = self.__create_authenticated_sesseion()
         # Create the download folder.
         os.makedirs(self.download_path, exist_ok=True)
-        # p = multiprocessing.Pool(nr_of_processes)
-        p = Threadpool(nr_of_threads)
-        p.map(self._mp_download_wrapper, self.download_urls)
-        p.close()
-        p.join()
+        self._mp_download_wrapper(self.download_url)
 
     @staticmethod
     def get_filename(url):
@@ -129,28 +122,15 @@ class DownloadManager(object):
 
         urllib.request.install_opener(opener)
 
-        try:
-            # The merra portal moved the authentication to the download level. Before this change you had to
-            # provide username and password on the overview page. For example:
-            # goldsmr4.sci.gsfc.nasa.gov/opendap/MERRA2/M2T1NXSLV.5.12.4/
-            # authentication_url = 'https://goldsmr4.sci.gsfc.nasa.gov/opendap/MERRA2/M2T1NXSLV.5.12.4/1980/01/MERRA2_100.tavg1_2d_slv_Nx.19800101.nc4.ascii?U2M[0:1:1][0:1:1][0:1:1]'
-            # Changes:
-            # Authenticate with the first url in the links.
-            # Request the website and initialiaze the BasicAuth. This will populate the auth_cookie_jar
-            authentication_url = self.download_urls[0]
-            result = opener.open(authentication_url)
-
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                raise IndexError('Requested URL is not available.')
-            elif e.code == 401:
-                raise ValueError('Username and or Password are not correct!')
-            else:
-                raise e
-        except IOError as e:
-            raise IOError('IO Error in Device.')
-        except IndexError as e:
-            raise IndexError('Unknown Download URL!')
+        # The merra portal moved the authentication to the download level. Before this change you had to
+        # provide username and password on the overview page. For example:
+        # goldsmr4.sci.gsfc.nasa.gov/opendap/MERRA2/M2T1NXSLV.5.12.4/
+        # authentication_url = 'https://goldsmr4.sci.gsfc.nasa.gov/opendap/MERRA2/M2T1NXSLV.5.12.4/1980/01/MERRA2_100.tavg1_2d_slv_Nx.19800101.nc4.ascii?U2M[0:1:1][0:1:1][0:1:1]'
+        # Changes:
+        # Authenticate with the first url in the links.
+        # Request the website and initialiaze the BasicAuth. This will populate the auth_cookie_jar
+        authentication_url = self.download_url
+        result = opener.open(authentication_url)
 
         return auth_cookie_jar
 
