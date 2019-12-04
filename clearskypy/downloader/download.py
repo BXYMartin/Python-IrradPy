@@ -171,7 +171,7 @@ class SocketManager:
                 os.remove(file_path)
             return False
         else:
-            logging.info("* File from Date " + str(date) + " Finished Download With %s Seconds" % (time.time() - start_time))
+            logging.info("* File from Date " + str(date) + " Finished Download With %3.2f Seconds" % (time.time() - start_time))
             return True
 
 

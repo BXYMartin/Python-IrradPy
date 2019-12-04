@@ -97,8 +97,9 @@ class DownloadManager(object):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-                    if random.random() < 0.01:
+                    if random.random() < 0.1:
                         print(".", flush=True, end='')
+        print()
         return r.status_code
 
     def __create_authenticated_sesseion(self):
