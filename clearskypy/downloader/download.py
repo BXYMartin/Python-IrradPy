@@ -632,4 +632,4 @@ class SocketManager:
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
             if self.global_retry:
-                logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)"
+                logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)")

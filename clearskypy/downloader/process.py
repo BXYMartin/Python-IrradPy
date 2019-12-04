@@ -96,6 +96,7 @@ class DownloadManager(object):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
+                    print(".")
         return r.status_code
 
     def __create_authenticated_sesseion(self):
