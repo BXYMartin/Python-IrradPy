@@ -12,7 +12,7 @@ import subprocess
 import logging
 import sys
 import os
-from threading import Timer
+import time
 import tempfile
 import netCDF4
 import numpy as np
@@ -136,6 +136,7 @@ class SocketManager:
 
         # If you want to see the download progress, check the download folder you
         # specified
+        start_time = time.time()
         logging.info("* File from Date " + str(date) + " Begin to Download")
         retry = True
         limit = 0
@@ -170,7 +171,7 @@ class SocketManager:
                 os.remove(file_path)
             return False
         else:
-            logging.info("* File from Date " + str(date) + " Finished Download")
+            logging.info("* File from Date " + str(date) + " Finished Download With %s Seconds" % (time.time() - start_time))
             return True
 
 
@@ -549,6 +550,7 @@ class SocketManager:
         """
         if lat_1 > lat_2 or lon_1 > lon_2:
             raise RuntimeError("Illegal data area selected!")
+        logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
         while self.global_retry:
             self.global_retry = False
             logging.info("Downloading data from {0}-{1}-{2} to {3}-{4}-{5}..."

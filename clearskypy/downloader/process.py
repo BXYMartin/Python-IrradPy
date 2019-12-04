@@ -5,6 +5,7 @@ from http import cookiejar
 import urllib.error
 import urllib.request
 import re
+import random
 
 class DownloadManager(object):
     __AUTHENTICATION_URL = 'https://urs.earthdata.nasa.gov/oauth/authorize'
@@ -96,7 +97,8 @@ class DownloadManager(object):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-                    print(".", flush=True, end='')
+                    if random.random() < 0.01:
+                        print(".", flush=True, end='')
         return r.status_code
 
     def __create_authenticated_sesseion(self):
