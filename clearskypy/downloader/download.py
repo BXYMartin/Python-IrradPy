@@ -12,6 +12,7 @@ import subprocess
 import logging
 import sys
 import os
+from threading import Timer
 import tempfile
 import netCDF4
 import numpy as np
@@ -138,6 +139,7 @@ class SocketManager:
         logging.info("* File from Date " + str(date) + " Begin to Download")
         retry = True
         limit = 0
+        passwd = False
         while retry and limit < 5:
             limit = limit + 1
             log = "{url} # {limit} Time Retry #".format(url=url, limit=limit)
@@ -149,6 +151,7 @@ class SocketManager:
                     logging.error(log + ': Requested URL is not available.')
                 elif e.code == 401:
                     logging.error(log + ': Username and or Password are not correct!')
+                    passwd = True
                 else:
                     logging.error(log + ': ' + str(e))
             except IOError as e:
@@ -161,6 +164,8 @@ class SocketManager:
         if retry:
             logging.critical("* File from Date " + str(date) + " Failed Download")
             file_path = os.path.join(download_manager.download_path, download_manager.get_filename(url))
+            if not passwd:
+                self.global_retry = True
             if os.path.exists(file_path):
                 os.remove(file_path)
             return False
@@ -246,7 +251,6 @@ class SocketManager:
                 else:
                     logging.critical("% New File from Date " + str(dates[i]) + " Failed")
                     log.remove(self.build_remote_filename(merra2_collection, dates[i], params))
-                    self.global_retry = True
             logging.info("---- Download Finished ----")
         np.save(log_file, np.array(log))
 
@@ -628,6 +632,4 @@ class SocketManager:
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
             if self.global_retry:
-                ans = input("Requested Data Partially Downloaded, Press [y]/n To Retry Downloading Or Abort...")
-                if ans != "y":
-                    self.global_retry = False
+                logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)"
