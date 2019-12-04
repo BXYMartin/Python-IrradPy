@@ -37,7 +37,7 @@ if __name__ == "__main__":
     freeze_support()
     setup(
         name = "ClearSkyPy",
-        version = "1.1.1",
+        version = "1.1.2",
         keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
         description = "Download tool for MERRA2 dataset for Clear Sky Model.",
         long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         author = "Jamie Bright, Yue Zhang, Martin Bai",
         author_email = "jamiebright1@gmail.com",
 
-        packages = find_packages(exclude=['test']),
+        packages = find_packages(exclude=['test', 'util']),
         include_package_data = True,
         platforms = "any",
         install_requires = [
