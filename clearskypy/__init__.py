@@ -1,6 +1,6 @@
 from . import downloader
 from . import extractor
-from . import module
+from . import model
 
 __all__ = ['downloader', 'extractor', 'model']
 
