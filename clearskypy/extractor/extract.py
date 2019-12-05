@@ -1,14 +1,18 @@
 import xarray as xr
 import numpy as np
-import math
-import scipy
-import datetime
-import sys
-import os
 
 
 def extract_dataset(lats, lons, dataset_path, variables, datevecs, interpolate=True):
-    """ extract variables from dataset """
+    """
+    extract variables from dataset
+
+    interpolate default to be TRUE Warning:if dataset coordinate less than datevecs dimention, interpolate will
+    increase the coordinate of dataset and cause error !!!
+
+
+    only for extract data from single dataset
+
+     """
     dataset = xr.open_dataset(dataset_path).sel(lat=lats, lon=lons, method='nearest')[
         variables]  # ectract nearest stations point for given lats and lons
     if dataset['time'].size > 1:
@@ -39,7 +43,7 @@ def extract_dataset(lats, lons, dataset_path, variables, datevecs, interpolate=T
 
 
 def extract_MERRA2(lats, lons, datavecs, elevs=1):
-    '''extract data from merra2 '''
+    """extract data from merra2 """
 
     # safety check
     if np.size(lats, 0) != np.size(lons, 0):
@@ -89,7 +93,3 @@ if __name__ == '__main__':
     lons = np.random.random(2) * 360 - 180
     date = ['2018-01-01T00:30:00', '2018-01-01T01:45:00', '2018-01-01T02:30:00']
     var = extract_MERRA2(lats, lons, date)
-    # print(var)
-    # nc_data = xr.open_dataset(datapath)
-    # print(nc_data)
-    # print(nc_obj)
