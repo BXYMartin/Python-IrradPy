@@ -1,95 +1,134 @@
 import xarray as xr
 import numpy as np
+import math
+import scipy
+import datetime
+import sys
+import os
 
 
 def extract_dataset(lats, lons, dataset_path, variables, datevecs, interpolate=True):
     """
     extract variables from dataset
 
-    interpolate default to be TRUE Warning:if dataset coordinate less than datevecs dimention, interpolate will
-    increase the coordinate of dataset and cause error !!!
+    :param lats: numpy.ndarray
+    :param lons: numpy.ndarray
+    :param dataset_path: string
+    :param variables: list of string
+    :param datevecs: list of string
+    :param interpolate: bool
+
+    :return var: list of numpy.ndarray
 
 
-    only for extract data from single dataset
+    lons and lats determine a site coordinate together. lons.length==lat.length
 
-     """
-    dataset = xr.open_dataset(dataset_path).sel(lat=lats, lon=lons, method='nearest')[
-        variables]  # ectract nearest stations point for given lats and lons
+    datavecs need to increase monotonically.
+
+    """
+
+    lons_unique, lons_index = np.unique(lons, return_inverse=True)
+    lats_unique, lats_index = np.unique(lats, return_inverse=True)
+
+    try:
+        dataset = xr.open_dataset(dataset_path).sel(lat=lats_unique, lon=lons_unique, method='nearest')[
+            variables]  # ectract nearest stations point for given lats and lons
+
+    except:
+        print('The data set does not contain the specified variable')
+        return -1
+
     if dataset['time'].size > 1:
         if interpolate:
             dataset_interpolation = dataset.interp(time=datevecs)  # use datevecs to interpolate
         else:
-            dataset_interpolation = dataset
+            try:
+                dataset_interpolation = dataset.sel(time=datevecs)
+            except:
+                print('can not find data match specified time coordinate, exit with code -2. Maybe you want to '
+                      'interpolate.')
+                return -2
+
     else:
         dataset_interpolation = dataset
 
-    lons_fixed = dataset_interpolation['lon'].data  # station lons
-    lats_fixed = dataset_interpolation['lat'].data  # station_lats
     var = []
     for index_variables in variables:
         if interpolate:
-            station_data = np.empty([len(datevecs), len(lats_fixed)], dtype=float)
-            for index_station in range(len(lons_fixed)):
+            station_data = np.empty([len(datevecs), len(lats)], dtype=float)
+            for index_station in range(len(lons)):
                 station_data[:, index_station] = np.array([dataset_interpolation[index_variables].sel(
-                    lat=lats_fixed[index_station], lon=lons_fixed[index_station]).data]).T[:, 0]
+                    lat=lats[index_station], lon=lons[index_station], method='nearest').data]).T[:, 0]
+
         else:
-            station_data = np.empty([len(lons_fixed), 1], dtype=float)  # for phis
-            for index_station in range(len(lons_fixed)):
+            station_data = np.empty([len(lons_unique), 1], dtype=float)  # for phis
+            for index_station in range(len(lons)):
                 station_data[index_station, :] = np.array([dataset_interpolation[index_variables].sel(
-                    lat=lats_fixed[index_station], lon=lons_fixed[index_station]).data])[:, 0]
+                    lat=lats[index_station], lon=lons[index_station], method='nearest').data])[:, 0]
         var.append(station_data)
 
     return var
 
 
-def extract_MERRA2(lats, lons, datavecs, elevs=1):
-    """extract data from merra2 """
+def extract_dataset_list(lats, lons, dataset_path_list, variables, datevecs, interpolate=True):
+    """
+    extract variables from dataset
 
-    # safety check
-    if np.size(lats, 0) != np.size(lons, 0):
-        print('ERROR: lats and lons dimention not match')
-        return -1
+    :param lats: numpy.ndarray
+    :param lons: numpy.ndarray
+    :param dataset_path_list: list of string
+    :param variables: list of string
+    :param datevecs: list of string
+    :param interpolate: bool
 
+    :return var: list of numpy.ndarray
 
-    aer_pool = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR']
-    rad_pool = ['ALBEDO']
-    slv_pool = ['TO3', 'TQV', 'PS']
-    asm_pool = ['PHIS']
+    lons and lats determine a site coordinate together. lons.length==lat.length
 
-    aerpath = 'dir_to_aer_dataset'
-    radpath = 'dir_to_rad_dataset'
-    slvpath = 'dir_to_slv_dataset'
-    asmpath = 'dir_to_asm_dataset'
+    datavecs need to increase monotonically.
 
-    aer_var = extract_dataset(lats, lons, aerpath, aer_pool, datavecs)
-    rad_var = extract_dataset(lats, lons, radpath, rad_pool, datavecs)
-    slv_var = extract_dataset(lats, lons, slvpath, slv_pool, datavecs)
-    asm_var = extract_dataset(lats, lons, asmpath, asm_pool, datavecs, interpolate=False)
+    """
+    '''
+    var_list = []
+    for dataset_path in dataset_path_list:
+        var = extract_dataset(lats, lons, dataset_path, variables, datevecs, interpolate)
+        var_list.append(var)
+    return var_list
+    '''
+    halfhour = datetime.timedelta(minutes=30)
+    var_list = []
+    for index_dataset in range(len(dataset_path_list)):
+        dataset = xr.open_dataset(dataset_path_list[index_dataset])
+        dataset_starttime = datetime.datetime.strptime(np.datetime_as_string(dataset['time'][0]),
+                                                       '%Y-%m-%dT%H:%M:%S.000000000')
+        dataset_endtime = datetime.datetime.strptime(np.datetime_as_string(dataset['time'][-1]),
+                                                     '%Y-%m-%dT%H:%M:%S.000000000')
+        datevecs_for_dataset = []
 
-    tot_aer_ext = aer_var[1]
-    AOD_550 = aer_var[0]
-    tot_angst = aer_var[2]
-    ozone = slv_var[0]
-    albedo = rad_var[0]
-    water_vapour = slv_var[1]
-    pressure = slv_var[2]
-    phis = asm_var[0]
+        if index_dataset == 0:
+            for index_datevec in range(len(datevecs)):
+                if datetime.datetime.strptime(datevecs[index_datevec],
+                                              '%Y-%m-%dT%H:%M:%S') <= dataset_endtime + halfhour:
+                    datevecs_for_dataset.append(datevecs[index_datevec])
 
-    water_vapour = water_vapour * 0.1
-    ozone = ozone * 0.001
-    h = phis / 9.80665
-    h0 = elevs
-    Ha = 2100
-    scale_height = np.exp((h0 - h) / Ha)
-    AOD_550 = AOD_550 * scale_height.T
-    water_vapour = water_vapour * scale_height.T
-    tot_angst[tot_angst < 0] = 0
-    return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure]
+        elif index_dataset == len(dataset_path_list) - 1:
+            for index_datevec in range(len(datevecs)):
+                if datetime.datetime.strptime(datevecs[index_datevec],
+                                              '%Y-%m-%dT%H:%M:%S') > dataset_starttime + halfhour:
+                    datevecs_for_dataset.append(datevecs[index_datevec])
 
+        else:
+            for index_datevec in range(len(datevecs)):
+                if dataset_starttime - halfhour < datetime.datetime.strptime(datevecs[index_datevec],
+                                                                             '%Y-%m-%dT%H:%M:%S') <= dataset_endtime + halfhour:
+                    datevecs_for_dataset.append(datevecs[index_datevec])
 
-if __name__ == '__main__':
-    '''test extract script'''
-    lats = np.random.random(2) * 90
-    lons = np.random.random(2) * 360 - 180
-    date = ['2018-01-01T00:30:00', '2018-01-01T01:45:00', '2018-01-01T02:30:00']
-    var = extract_MERRA2(lats, lons, date)
+        var_list.append(
+            extract_dataset(lats, lons, dataset_path_list[index_dataset], variables, datevecs_for_dataset, interpolate))
+    var = var_list[0]
+    for index_varlist in range(len(var_list) - 1):
+        for index_variable in range(len(variables)):
+            var[index_variable] = np.vstack((var[index_variable], var_list[index_varlist + 1][index_variable]))
+
+    return var
+
