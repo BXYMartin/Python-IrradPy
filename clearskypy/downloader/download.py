@@ -12,6 +12,7 @@ import subprocess
 import logging
 import sys
 import os
+import errno
 import time
 import tempfile
 import netCDF4
@@ -256,6 +257,66 @@ class SocketManager:
         np.save(log_file, np.array(log))
 
 
+    def merge_variables(
+        self,
+        path_data: Union[str, Path],
+        collection_names: List[str],
+        initial_year: int,
+        final_year: int,
+        initial_month: int,
+        final_month: int,
+        initial_day: int,
+        final_day: int,
+
+    ):
+        if not isinstance(path_data, Path):
+            path_data = Path(path_data)
+
+        logging.info("---- Begin Merging In Variables ----")
+        for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
+            search_str = "*{0}.nc4.nc".format(str(date).replace('-', ''))
+            nc_files = [str(f) for f in path_data.rglob(search_str)]
+            nc_files.sort()
+            if len(nc_files) == 0:
+                logging.info("* Skipping Data In {0}".format(date))
+                continue
+
+            logging.info("* Processing Data In {0}".format(date))
+
+            final_ds = xr.Dataset()
+
+            collections = []
+            # a connection/file for each repository
+            for name in nc_files:
+                logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
+                var = os.path.split(name)[1].split('_')[3]
+                if var not in collections:
+                    collections.append(var)
+                remote_ds = xr.open_dataset(name)
+                # subset to desired variables and merge
+                final_ds = xr.merge([final_ds, remote_ds])
+
+            collections.sort()
+            # save final dataset to netCDF
+            file_name_str = "{0}_merra2_reanalysis_{1}.nc".format('-'.join(collections), date)
+            filename = os.path.join(path_data.parent, file_name_str)
+
+            encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
+            logging.info("- Saving Data For {0}".format(date))
+            final_ds.to_netcdf(filename, encoding=encoding)
+            logging.info("# Deleting Redundant Files...")
+            for name in nc_files:
+                try:
+                    os.remove(name)
+                except OSError as err:
+                    logging.error("OSError: {0} {1}".format(os.path.split(name)[1], err))
+
+            logging.info("- Finished Deleting Redundant Files...")
+
+        logging.info("---- Finish Merging In Variables ----")
+
+
+
     def daily_netcdf(
         self,
         path_data: Union[str, Path],
@@ -283,9 +344,16 @@ class SocketManager:
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
 
+        log_file = os.path.join(path_data, 'index.npy')
+        if os.path.exists(log_file):
+            log = np.load(log_file).tolist()
+        else:
+            log = []
+
         if not merra2_var_dict:
             merra2_var_dict = var_list[collection_name]
 
+        logging.info("---- Begin Merging In Time ----")
         if merra2_var_dict["collection"].startswith("const"):
             search_str = "*{0}*.nc4".format(merra2_var_dict["collection"])
             nc_files = [str(f) for f in path_data.rglob(search_str)]
@@ -293,14 +361,20 @@ class SocketManager:
                 shutil.copy(f, path_data.parent)
             return
 
+        logging.info("* Searching For Files To Merge...")
         search_str = "*{0}*.nc4*".format(merra2_var_dict["collection"])
         nc_files = [str(f) for f in path_data.rglob(search_str)]
+        nc_files = list(filter(lambda a: a not in log, nc_files))
+        for name in nc_files:
+            log.append(name)
         if os.path.exists(output_file) and len(os.listdir(path_data)) != 0:
             shutil.copy(output_file, path_data)
             filepath, filename = os.path.split(output_file)
             nc_files.append(os.path.join(path_data, filename))
         nc_files.sort()
+        logging.info("- Find Files [{0}] To Merge...".format(','.join([os.path.split(name)[1] for name in nc_files])))
 
+        logging.info("* Processing Headers...")
         relevant_files = []
         divided_files = []
         nt_division = [0]
@@ -449,6 +523,7 @@ class SocketManager:
 
         nc_reference.close()
 
+        logging.info("- Finished Creating Headers...")
         if isinstance(merra2_var_dict["var_name"], list):
             t = {}
             for name in merra2_var_dict["var_name"]:
@@ -457,6 +532,8 @@ class SocketManager:
             t = 0
         for i, nc_file in enumerate(divided_files):
             logging.debug(nc_file)
+
+            logging.info("% Merging Data {0}/{1}".format(i+1, len(divided_files)))
             nc = netCDF4.Dataset(nc_file, "r")
             if isinstance(merra2_var_dict["var_name"], list):
                 ncvar = {}
@@ -478,7 +555,11 @@ class SocketManager:
                 t += ncvar.shape[0]
             nc.close()
 
+        logging.info("% Saving Data")
         nc1.close()
+
+        np.save(log_file, np.array(log))
+        logging.info("---- Finish Merging In Time ----")
 
 
     def daily_download_and_convert(
@@ -569,7 +650,18 @@ class SocketManager:
             if not os.path.exists(output_dir):
                 os.mkdir(output_dir)
 
-            temp_dir_download = tempfile.mkdtemp(dir=output_dir)
+            # temp_dir_download = tempfile.mkdtemp(dir=output_dir)
+            temp_dir_name = "{0}-{1}-{2}~{3}-{4}-{5} {6} [{7},{8}]~[{9},{10}]".format(initial_year, initial_month, initial_day, final_year, final_month, final_day,
+                        '-'.join(collection_names), lat_1, lon_1, lat_2, lon_2)
+            temp_dir_download = os.path.join(output_dir, temp_dir_name)
+            try:
+                os.mkdir(temp_dir_download)
+            except OSError as err:
+                if err.errno != errno.EEXIST:
+                    raise err
+                else:
+                    logging.info("Request Already Exist in Download Directory, Adding More Files...")
+
             for i, collection_name in enumerate(collection_names):
                 if not merra2_var_dicts:
                     merra2_var_dict = var_list[collection_name]
@@ -641,5 +733,16 @@ class SocketManager:
                 )
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
+            else:
+                self.merge_variables(
+                        temp_dir_download,
+                        collection_names,
+                        initial_year,
+                        final_year,
+                        initial_month,
+                        final_month,
+                        initial_day,
+                        final_day,
+                )
             if self.global_retry:
                 logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)")
