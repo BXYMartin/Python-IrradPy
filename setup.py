@@ -4,6 +4,8 @@ from multiprocessing import freeze_support
 import os
 import sys
 import unittest
+
+
 def discover_and_run_tests():
     # get setup.py directory
     setup_file = sys.modules['__main__'].__file__
@@ -37,7 +39,7 @@ if __name__ == "__main__":
     freeze_support()
     setup(
         name = "ClearSkyPy",
-        version = "1.1.2",
+        version = "1.2.0",
         keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
         description = "Download tool for MERRA2 dataset for Clear Sky Model.",
         long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
