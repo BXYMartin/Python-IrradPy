@@ -6,6 +6,10 @@ import urllib.error
 import urllib.request
 import re
 import random
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 class DownloadManager(object):
     __AUTHENTICATION_URL = 'https://urs.earthdata.nasa.gov/oauth/authorize'
