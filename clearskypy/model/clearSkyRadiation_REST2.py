@@ -195,7 +195,7 @@ def clear_sky_reset2(zenith_angle: np.ndarray, Eext: np.ndarray, pressure: np.nd
     E0n1 = Eext * 0.46512
     # direct beam irradiance
     Ebn1 = E0n1 * TR1 * Tg1 * To1 * Tn1 * Tw1 * TA1
-    print(E0n1 * np.cos(zenith_angle) * To1 * Tg1 )
+
     # the incident diffuse irradiance on a perfectly absorbing ground
     Edp1 = E0n1 * np.cos(zenith_angle) * To1 * Tg1 * Tn1166 * Tw1166 * (
             BR1 * (1 - TR1) * np.power(TA1, 0.25) + Ba * F1 * TR1 * (1 - np.power(TAS1, 0.25)))
