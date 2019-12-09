@@ -18,8 +18,8 @@ class dummy_downloader():
 
         # specify the end date
         self.final_year = 2018
-        self.final_month = 1
-        self.final_day = 1
+        self.final_month = 12
+        self.final_day = 31
 
         # specify the bottom left corner of the rectangular region
         self.lat_1 = -90
@@ -55,7 +55,7 @@ class dummy_downloader():
                 "slv": {
                     "esdt_dir": "M2T1NXSLV.5.12.4",
                     "collection": "tavg1_2d_slv_Nx",
-                    "var_name": ["TQV", "TO3", "PS", "CLDPRS", "CLDTMP", "H1000", "H250", "H500", "H850", "T2M", "U250", "U500", "V250", "V500"],
+                    "var_name": ["TQV", "TO3", "PS"],
                     "standard_name": "surface",
                     "least_significant_digit": 3,
 
