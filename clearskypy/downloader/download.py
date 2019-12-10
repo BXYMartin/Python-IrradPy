@@ -299,7 +299,7 @@ class SocketManager:
             collections.sort()
             # save final dataset to netCDF
             file_name_str = "{0}_merra2_reanalysis_{1}.nc".format('-'.join(collections), date)
-            filename = os.path.join(path_data.parent, file_name_str)
+            filename = os.path.join(path_data, file_name_str)
 
             encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
             logging.info("- Saving Data For {0}".format(date))
