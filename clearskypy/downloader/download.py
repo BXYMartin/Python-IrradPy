@@ -367,10 +367,12 @@ class SocketManager:
         nc_files = list(filter(lambda a: a not in log, nc_files))
         for name in nc_files:
             log.append(name)
+        # Merging with original file
         if os.path.exists(output_file) and len(os.listdir(path_data)) != 0:
             shutil.copy(output_file, path_data)
             filepath, filename = os.path.split(output_file)
-            nc_files.append(os.path.join(path_data, filename))
+            merging_file = os.path.join(path_data, filename)
+            nc_files.append(merging_file)
         nc_files.sort()
         logging.info("- Find Files [{0}] To Merge...".format(','.join([os.path.split(name)[1] for name in nc_files])))
 
@@ -559,6 +561,10 @@ class SocketManager:
         nc1.close()
 
         np.save(log_file, np.array(log))
+
+        logging.info("- Removing Old Merged Files...")
+        if os.path.exists(merging_file):
+            os.remove(merging_file)
         logging.info("---- Finish Merging In Time ----")
 
 
