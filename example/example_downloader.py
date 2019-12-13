@@ -18,8 +18,8 @@ class dummy_downloader():
 
         # specify the end date
         self.final_year = 2018
-        self.final_month = 12
-        self.final_day = 31
+        self.final_month = 1
+        self.final_day = 3
 
         # specify the bottom left corner of the rectangular region
         self.lat_1 = -90
@@ -35,7 +35,7 @@ class dummy_downloader():
         self.thread_num = 20
 
         # specify whether or not to delete the temporary data [True/False]
-        self.delete_temp_dir = True
+        self.delete_temp_dir = False
 
         # specify the output destination of the data, depending on operating system changes the file separator
         # default location is where you run the script, specify here if you want to change it using os.join.
