@@ -50,8 +50,8 @@ def test_extract_MERRA2(lats, lons, datavecs, elevs, aerpath, radpath, slvpath, 
     tot_angst[tot_angst < 0] = 0
     return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure]
 
-def latlon2solarzenith(lat, lon, datearray):
 
+def latlon2solarzenith(lat, lon, datearray):
     """
 
     :param lat: np.ndarray of lat vector (n,1)
@@ -61,6 +61,9 @@ def latlon2solarzenith(lat, lon, datearray):
     """
     dayth = []
     hourth = []
+    datearray = np.array(datearray, dtype='datetime64[s]').reshape([datearray.size, 1])
+    lat = lat.reshape([lat.size, 1])
+    lon = lon.reshape([lon.size, 1])
     for date in datearray:
         datetuple = date[0].astype(datetime.datetime).timetuple()
         dayth.append(datetuple.tm_yday)
@@ -92,6 +95,7 @@ def latlon2solarzenith(lat, lon, datearray):
     zen = zen.T
 
     return zen
+
 
 def test_extract_dataset_list():
     """
@@ -140,26 +144,16 @@ def example_for_rest2(station_number, allgrid=False, elevs=1):
 
         lons_grid = dataset['lon'].data
         lats_grid = dataset['lat'].data
-        lons = np.empty([lons_grid.size * lats_grid.size, ])
-        lats = np.empty([lons_grid.size * lats_grid.size, ])
-        zenith = np.empty([timesize, lons_grid.size * lats_grid.size])
-        for index_lats in range(lats_grid.size):
-            for index_lons in range(lons_grid.size):
-                lons[index_lons * (index_lats - 1) + index_lons] = lons_grid[index_lons]
-                lats[index_lons * (index_lats - 1) + index_lons] = lats_grid[index_lats]
-                solpos = pvlib.solarposition.get_solarposition(time, lats_grid[index_lats], lons_grid[index_lons])
-                zenith[:, index_lons * (index_lats - 1) + index_lons] = np.array(solpos['apparent_zenith']).reshape(
-                    [timesize, 1])[:, 0]
+        lons = np.tile(lons_grid, lats_grid.size).reshape([lons_grid.size * lats_grid.size, ], order='F')
+        lats = np.repeat(lats_grid, lons_grid.size).reshape([lons_grid.size * lats_grid.size, ])
+        zenith = latlon2solarzenith(lats, lons, time)
+
 
     else:
         lats = np.random.random(station_number) * 90
         lons = np.random.random(station_number) * 360 - 180
+        zenith = latlon2solarzenith(lats, lons, time)
 
-        zenith = np.empty([timesize, station_number])
-        for index_station in range(station_number):
-            solpos = pvlib.solarposition.get_solarposition(time, lats[index_station], lons[index_station])
-            zenith[:, index_station] = np.array(solpos['apparent_zenith']).reshape(
-                [timesize, 1])[:, 0]
 
     'extract data from dataset by extractor'
     merra2_data_for_rest2 = test_extract_MERRA2(lats, lons, time, elevs, aerpath, radpath, slvpath, asmpath)
@@ -183,5 +177,4 @@ def example_for_rest2(station_number, allgrid=False, elevs=1):
 
 
 if __name__ == '__main__':
-    dataset = xr.open_dataset('MERRA2_data/rad_M2T1NXRAD.5.12.4_merra2_reanalysis_2018.nc')
-    print(dataset['time'])
+    example_for_rest2(3)
