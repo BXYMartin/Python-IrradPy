@@ -19,6 +19,7 @@ import netCDF4
 import numpy as np
 import numpy.ma as ma
 import urllib.error
+from multiprocessing.pool import MaybeEncodingError
 from calendar import monthrange
 from pathlib import Path
 from typing import List
@@ -162,6 +163,8 @@ class SocketManager:
                 logging.error(log + ': Unknown Download URL!')
             except TypeError as e:
                 logging.error(log + ': File Chunk Type Mismatch')
+            except MaybeEncodingError as e:
+                logging.error(log + ': Error in Serialize Results')
 
         if retry:
             logging.critical("* File from Date " + str(date) + " Failed Download")
