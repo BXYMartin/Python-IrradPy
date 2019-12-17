@@ -19,6 +19,7 @@ import netCDF4
 import numpy as np
 import numpy.ma as ma
 import urllib.error
+from multiprocessing.pool import MaybeEncodingError
 from calendar import monthrange
 from pathlib import Path
 from typing import List
@@ -171,6 +172,8 @@ class SocketManager:
                 logging.error(log + ': Unknown Download URL!')
             except TypeError as e:
                 logging.error(log + ': File Chunk Type Mismatch')
+            except MaybeEncodingError as e:
+                logging.error(log + ': Error in Serialize Results')
 
         if retry:
             logging.critical("* File from Date " + str(date) + " Failed Download")
@@ -206,6 +209,7 @@ class SocketManager:
         auth: dict = None,
         output_directory: Union[str, Path] = None,
         thread_num: int = 5,
+        merge_yearly: bool = True,
     ):
         """
         MERRA2 universal download.
@@ -223,7 +227,7 @@ class SocketManager:
         auth : dict,
         output_directory : Union[str, Path]
         thread_num : int
-
+        merge_yearly: bool
         """
         if not isinstance(output_directory, Path):
             log_file = Path(output_directory)
@@ -258,7 +262,7 @@ class SocketManager:
 
         dates = []
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-            if self.build_remote_filename(merra2_collection, date, params) in log:
+            if self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly) in log:
                 logging.info("Skipping existing file " + self.build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
                 continue
             else:
@@ -332,7 +336,7 @@ class SocketManager:
             collections.sort()
             # save final dataset to netCDF
             file_name_str = "{0}_merra2_reanalysis_{1}.nc".format('-'.join(collections), date)
-            filename = os.path.join(path_data.parent, file_name_str)
+            filename = os.path.join(path_data, file_name_str)
 
             encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
             logging.info("- Saving Data For {0}".format(date))
@@ -400,10 +404,14 @@ class SocketManager:
         nc_files = list(filter(lambda a: a not in log, nc_files))
         for name in nc_files:
             log.append(name)
+        # Merging with original file
         if os.path.exists(output_file) and len(os.listdir(path_data)) != 0:
             shutil.copy(output_file, path_data)
             filepath, filename = os.path.split(output_file)
-            nc_files.append(os.path.join(path_data, filename))
+            merging_file = os.path.join(path_data, filename)
+            nc_files.append(merging_file)
+        else:
+            merging_file = None
         nc_files.sort()
         logging.info("- Find Files [{0}] To Merge...".format(','.join([os.path.split(name)[1] for name in nc_files])))
 
@@ -592,6 +600,10 @@ class SocketManager:
         nc1.close()
 
         np.save(log_file, np.array(log))
+
+        logging.info("- Removing Old Merged Files...")
+        if merging_file is not None and os.path.exists(merging_file):
+            os.remove(merging_file)
         logging.info("---- Finish Merging In Time ----")
 
 
@@ -612,6 +624,7 @@ class SocketManager:
         output_dir: Union[str, Path] = None,
         auth: dict = None,
         delete_temp_dir: bool = True,
+        merge_yearly: bool = True,
         thread_num: Optional[int] = 5,
     ):
         """MERRA2 daily download and conversion.
@@ -661,6 +674,7 @@ class SocketManager:
             Dictionary contains login information.
             {"uid": "USERNAME", "password": "PASSWORD"}
         delete_temp_dir : bool
+        merge_yearly: bool
         thread_num : Optional[int]
             Number of Files to be downloaded simutanously.
 
@@ -744,26 +758,28 @@ class SocketManager:
                     auth=auth,
                     params=parameter,
                     thread_num=thread_num,
+                    merge_yearly=merge_yearly,
                 )
-                # Name the output file
-                if initial_year == final_year:
-                    file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
-                    out_file_name = file_name_str.format(collection_name, merra2_var_dict["esdt_dir"], str(initial_year))
-                else:
-                    file_name_str = "{0}_{1}_merra2_reanalysis_{2}-{3}.nc"
-                    out_file_name = file_name_str.format(
-                        collection_name, merra2_var_dict["esdt_dir"], str(initial_year), str(final_year)
+                if merge_yearly:
+                    # Name the output file
+                    if initial_year == final_year:
+                        file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
+                        out_file_name = file_name_str.format(collection_name, merra2_var_dict["esdt_dir"], str(initial_year))
+                    else:
+                        file_name_str = "{0}_{1}_merra2_reanalysis_{2}-{3}.nc"
+                        out_file_name = file_name_str.format(
+                            collection_name, merra2_var_dict["esdt_dir"], str(initial_year), str(final_year)
+                        )
+                    out_file = Path(output_dir).joinpath(out_file_name)
+                    # Extract variable
+                    self.daily_netcdf(
+                        temp_dir_download,
+                        out_file,
+                        collection_name,
+                        initial_year,
+                        final_year,
+                        merra2_var_dict
                     )
-                out_file = Path(output_dir).joinpath(out_file_name)
-                # Extract variable
-                self.daily_netcdf(
-                    temp_dir_download,
-                    out_file,
-                    collection_name,
-                    initial_year,
-                    final_year,
-                    merra2_var_dict
-                )
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
             else:
