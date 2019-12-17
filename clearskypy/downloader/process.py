@@ -5,7 +5,6 @@ from http import cookiejar
 import urllib.error
 import urllib.request
 import re
-import random
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -101,9 +100,6 @@ class DownloadManager(object):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-                    if random.random() < 0.1:
-                        print(".", flush=True, end='')
-        print()
         return r.status_code
 
     def __create_authenticated_sesseion(self):

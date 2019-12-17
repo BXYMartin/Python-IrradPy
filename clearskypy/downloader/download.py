@@ -89,6 +89,11 @@ class SocketManager:
                          date=date)
             )
 
+
+    def reconstruct_filename(self, name, params):
+        return '{name}?{params}'.format(name=name, params=params)
+
+
     # function to build the database file name
     def build_remote_filename(self, merra2_collection, date, params):
         merra_stream = "400"
@@ -129,6 +134,10 @@ class SocketManager:
         url = os.path.join(self.build_remote_url(merra2_collection, date),
                             self.build_remote_filename(merra2_collection, date, params))
 
+        file_path = os.path.join(output_directory, DownloadManager.get_filename(url))
+        if os.path.exists(file_path):
+            logging.info("- Detected Duplicated File from Date " + str(date) + ", Deleting Existing File Before Downloading...")
+            os.remove(file_path)
         # The DownloadManager class is defined in the opendap_download module.
         download_manager = DownloadManager()
         download_manager.set_username_and_password(auth['uid'], auth['password'])
@@ -165,7 +174,6 @@ class SocketManager:
 
         if retry:
             logging.critical("* File from Date " + str(date) + " Failed Download")
-            file_path = os.path.join(download_manager.download_path, download_manager.get_filename(url))
             if not passwd:
                 self.global_retry = True
             if os.path.exists(file_path):
@@ -182,6 +190,7 @@ class SocketManager:
         while current <= last:
             yield current
             current += datetime.timedelta(1)
+
 
     # run the function
     def subdaily_universal_download(
@@ -225,6 +234,28 @@ class SocketManager:
         else:
             log = []
 
+        logging.info("---- Begin Analysing Directory ----")
+        for name in os.listdir(output_directory):
+            if self.reconstruct_filename(name, params) not in log:
+                intact = False
+                try:
+                    lat = xr.open_dataset(os.path.join(output_directory, name)).lat
+                    lon = xr.open_dataset(os.path.join(output_directory, name)).lon
+                    for value in lat:
+                        if value != 0:
+                            intact = True
+                    for value in lon:
+                        if value != 0:
+                            intact = True
+                except Exception:
+                    intact = False
+                if intact:
+                    log.append(self.reconstruct_filename(name, params))
+                    logging.info("- Found previous intact file " + self.reconstruct_filename(name, params))
+                else:
+                    logging.error("* Found previous corrupted file " + self.reconstruct_filename(name, params) + ", Scheduled for redownload")
+        logging.info("---- End Analysing Directory ----")
+
         dates = []
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
             if self.build_remote_filename(merra2_collection, date, params) in log:
@@ -232,29 +263,31 @@ class SocketManager:
                 continue
             else:
                 logging.info("Preparing new file " + self.build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
-                log.append(self.build_remote_filename(merra2_collection, date, params))
             dates.append(date)
 
         if len(dates) > 0:
             logging.info("----  Begin  Download  ----")
-            pool = multiprocessing.Pool(thread_num)
-            rel = pool.map(
-                    partial(self.download_merra2_nc,
-                        merra2_collection=merra2_collection,
-                        output_directory=output_directory,
-                        params=params,
-                        auth=auth,
-                        ), dates
-                    )
+            for start in range(0, len(dates), thread_num):
+                end = min(start+thread_num, len(dates))
+                pool = multiprocessing.Pool(thread_num)
+                rel = pool.map(
+                        partial(self.download_merra2_nc,
+                            merra2_collection=merra2_collection,
+                            output_directory=output_directory,
+                            params=params,
+                            auth=auth,
+                            ), dates[start:end]
+                        )
 
-            for i, success in enumerate(rel):
-                if success:
-                    logging.info("% New File from Date " + str(dates[i]) + " Confirmed")
-                else:
-                    logging.critical("% New File from Date " + str(dates[i]) + " Failed")
-                    log.remove(self.build_remote_filename(merra2_collection, dates[i], params))
+                for i, success in enumerate(rel):
+                    if success:
+                        logging.info("% New File from Date " + str(dates[start:end][i]) + " Confirmed")
+                        log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params))
+                    else:
+                        logging.critical("% New File from Date " + str(dates[start:end][i]) + " Failed")
+                        print(self.build_remote_filename(merra2_collection, dates[start:end][i], params))
+                np.save(log_file, np.array(log))
             logging.info("---- Download Finished ----")
-        np.save(log_file, np.array(log))
 
 
     def merge_variables(
