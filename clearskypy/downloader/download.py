@@ -254,7 +254,7 @@ class SocketManager:
                 except Exception:
                     intact = False
                 if intact:
-                    log.append(self.reconstruct_filename(name, params))
+                    log.append(self.reconstruct_filename(name, params) + str(merge_yearly))
                     logging.info("- Found previous intact file " + self.reconstruct_filename(name, params))
                 else:
                     logging.error("* Found previous corrupted file " + self.reconstruct_filename(name, params) + ", Scheduled for redownload")
@@ -286,7 +286,7 @@ class SocketManager:
                 for i, success in enumerate(rel):
                     if success:
                         logging.info("% New File from Date " + str(dates[start:end][i]) + " Confirmed")
-                        log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params))
+                        log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params) + str(merge_yearly))
                     else:
                         logging.critical("% New File from Date " + str(dates[start:end][i]) + " Failed")
                         print(self.build_remote_filename(merra2_collection, dates[start:end][i], params))
