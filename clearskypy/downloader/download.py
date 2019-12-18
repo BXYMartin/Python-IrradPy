@@ -248,9 +248,11 @@ class SocketManager:
                     for value in lat:
                         if value != 0:
                             intact = True
+                            break
                     for value in lon:
                         if value != 0:
                             intact = True
+                            break
                 except Exception:
                     intact = False
                 if intact:
