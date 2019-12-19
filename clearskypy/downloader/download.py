@@ -240,7 +240,7 @@ class SocketManager:
 
         logging.info("---- Begin Analysing Directory ----")
         for name in os.listdir(output_directory):
-            if self.reconstruct_filename(name, params) + str(merge_yearly) not in log:
+            if name.endswith('.nc4.nc') and self.reconstruct_filename(name, params) + str(merge_yearly) not in log:
                 intact = False
                 try:
                     lat = xr.open_dataset(os.path.join(output_directory, name)).lat
