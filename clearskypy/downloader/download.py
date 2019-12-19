@@ -240,7 +240,7 @@ class SocketManager:
 
         logging.info("---- Begin Analysing Directory ----")
         for name in os.listdir(output_directory):
-            if self.reconstruct_filename(name, params) not in log:
+            if self.reconstruct_filename(name, params) + str(merge_yearly) not in log:
                 intact = False
                 try:
                     lat = xr.open_dataset(os.path.join(output_directory, name)).lat
@@ -258,6 +258,7 @@ class SocketManager:
                 if intact:
                     log.append(self.reconstruct_filename(name, params) + str(merge_yearly))
                     logging.info("- Found previous intact file " + self.reconstruct_filename(name, params))
+                    np.save(log_file, np.array(log))
                 else:
                     logging.error("* Found previous corrupted file " + self.reconstruct_filename(name, params) + ", Scheduled for redownload")
         logging.info("---- End Analysing Directory ----")
