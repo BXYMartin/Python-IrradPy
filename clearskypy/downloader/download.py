@@ -277,14 +277,14 @@ class SocketManager:
             for start in range(0, len(dates), thread_num):
                 end = min(start+thread_num, len(dates))
                 pool = multiprocessing.Pool(thread_num)
-                rel = pool.map(
+                rel = pool.map_async(
                         partial(self.download_merra2_nc,
                             merra2_collection=merra2_collection,
                             output_directory=output_directory,
                             params=params,
                             auth=auth,
                             ), dates[start:end]
-                        )
+                        ).get(9999999)
 
                 for i, success in enumerate(rel):
                     if success:
