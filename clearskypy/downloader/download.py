@@ -284,7 +284,7 @@ class SocketManager:
                             params=params,
                             auth=auth,
                             ), dates[start:end]
-                        ).get(9999999)
+                        ).get(10000)
 
                 for i, success in enumerate(rel):
                     if success:
