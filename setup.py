@@ -39,7 +39,7 @@ if __name__ == "__main__":
     freeze_support()
     setup(
         name = "ClearSkyPy",
-        version = "1.3.0",
+        version = "1.3.1",
         keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
         description = "Download tool for MERRA2 dataset for Clear Sky Model.",
         long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
