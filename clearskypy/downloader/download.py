@@ -198,6 +198,20 @@ class SocketManager:
             current += datetime.timedelta(1)
 
 
+    def iter_months(self, first: datetime.date, last: datetime.date):
+        ym_start= 12*first.year + first.month - 1
+        ym_end= 12*last.year + last.month - 1
+        for ym in range( ym_start, ym_end + 1 ):
+            y, m = divmod( ym, 12 )
+            ny, nm = divmod( ym + 1, 12  )
+            for sub in self.iter_days(datetime.date(y, m+1, 1), datetime.date(ny, nm+1, 1) + datetime.timedelta(-1)):
+                if sub not in self.iter_days(first, last):
+                    logging.error("Missing File From Date {} To Merge Month {}!".format(sub, "{:0>4d}-{:0>2d}".format(y, m+1)))
+                    return
+            yield "{:0>4d}-{:0>2d}".format(y, m+1)
+
+
+
     # run the function
     def subdaily_universal_download(
         self,
@@ -212,7 +226,7 @@ class SocketManager:
         auth: dict = None,
         output_directory: Union[str, Path] = None,
         thread_num: int = 5,
-        merge_yearly: bool = True,
+        merge: str = "monthly",
     ):
         """
         MERRA2 universal download.
@@ -230,7 +244,7 @@ class SocketManager:
         auth : dict,
         output_directory : Union[str, Path]
         thread_num : int
-        merge_yearly: bool
+        merge: str
         """
         if not isinstance(output_directory, Path):
             log_file = Path(output_directory)
@@ -240,10 +254,15 @@ class SocketManager:
             log = np.load(log_file).tolist()
         else:
             log = []
-
+        for i, n in enumerate(log):
+            if n.endswith('False'):
+                log[i] = n.replace('False', merge)
+            if n.endswith('True'):
+                log[i] = n.replace('True', merge)
         logging.info("---- Begin Analysing Directory ----")
         for name in os.listdir(output_directory):
-            if name.endswith('.nc4.nc') and merra2_collection["collection"] in name and self.reconstruct_filename(name, params) + str(merge_yearly) not in log:
+            if name.endswith('.nc4.nc') and merra2_collection["collection"] in name and self.reconstruct_filename(name, params) + str(merge) not in log:
+                # Compatibility Check For Jamie
                 intact = False
                 try:
                     lat = xr.open_dataset(os.path.join(output_directory, name)).lat
@@ -259,28 +278,32 @@ class SocketManager:
                 except Exception:
                     intact = False
                 if intact:
-                    log.append(self.reconstruct_filename(name, params) + str(merge_yearly))
+                    log.append(self.reconstruct_filename(name, params) + str(merge))
                     logging.info("- Found previous intact file " + self.reconstruct_filename(name, params))
                     np.save(log_file, np.array(log))
                 else:
                     logging.error("* Found previous corrupted file " + self.reconstruct_filename(name, params) + ", Scheduled for redownload")
-        logging.info("---- End Analysing Directory ----")
+        logging.info("----  End Analysing Directory  ----")
 
         dates = []
         temp_log = []
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-            if self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly) in temp_log or self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly) in log:
+            if self.build_remote_filename(merra2_collection, date, params) + str(merge) in temp_log or self.build_remote_filename(merra2_collection, date, params) + str(merge) in log:
                 logging.info("Skipping existing file " + self.build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
                 continue
             else:
-                temp_log.append(self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly))
+                temp_log.append(self.build_remote_filename(merra2_collection, date, params) + str(merge))
                 logging.info("Preparing new file " + self.build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
             dates.append(date)
 
         if len(dates) > 0:
             logging.info("----  Begin  Download  ----")
+            time_start = None
             for start in range(0, len(dates), thread_num):
                 end = min(start+thread_num, len(dates))
+                if time_start is not None:
+                    logging.info("~ %d Files Downloaded In %3.2f Seconds, %d Files Left, Expected %3.2f Minutes Remaining..." % (thread_num, time.time() - time_start, len(dates) - start, (len(dates) - start)/thread_num*(time.time() - time_start)/60))
+                time_start = time.time()
                 pool = multiprocessing.Pool(thread_num)
                 rel = pool.map_async(
                         partial(self.download_merra2_nc,
@@ -311,7 +334,7 @@ class SocketManager:
                             intact = False
                         if intact:
                             logging.info("% New File from Date " + str(dates[start:end][i]) + " Confirmed")
-                            log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params) + str(merge_yearly))
+                            log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params) + str(merge))
                         else:
                             logging.critical("% New File from Date " + str(dates[start:end][i]) + " Integrity Check Failed")
                     else:
@@ -320,7 +343,7 @@ class SocketManager:
             logging.info("---- Download Finished ----")
 
 
-    def merge_variables(
+    def merge_variables_perday(
         self,
         path_data: Union[str, Path],
         collection_names: List[str],
@@ -335,7 +358,7 @@ class SocketManager:
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
 
-        logging.info("---- Begin Merging In Variables ----")
+        logging.info("---- Begin Merging In Daily Variables ----")
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
             search_str = "*{0}.nc4.nc".format(str(date).replace('-', ''))
             nc_files = [str(f) for f in path_data.rglob(search_str)]
@@ -376,8 +399,64 @@ class SocketManager:
 
             logging.info("- Finished Deleting Redundant Files...")
 
-        logging.info("---- Finish Merging In Variables ----")
+        logging.info("---- Finish Merging In Daily Variables ----")
 
+    def merge_variables_permonth(
+        self,
+        path_data: Union[str, Path],
+        collection_names: List[str],
+        initial_year: int,
+        final_year: int,
+        initial_month: int,
+        final_month: int,
+        initial_day: int,
+        final_day: int,
+
+    ):
+        if not isinstance(path_data, Path):
+            path_data = Path(path_data)
+
+        logging.info("---- Begin Merging In Monthly Variables ----")
+        for date in self.iter_months(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
+            search_str = "*{0}*.nc".format(date)
+            nc_files = [str(f) for f in path_data.rglob(search_str)]
+            nc_files.sort()
+            if len(nc_files) == 0:
+                logging.info("* Skipping Data In {0}".format(date))
+                continue
+
+            logging.info("* Processing Data In {0}".format(date))
+
+            final_ds = xr.open_dataset(nc_files[0])
+
+            collections = os.path.split(nc_files[0])[1].split('_')[0]
+            # a connection/file for each repository
+            for name in nc_files[1:]:
+                logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
+                var = os.path.split(name)[1].split('_')[0]
+                if collections is None or len(collections) > len(var):
+                    collections = var
+                remote_ds = xr.open_dataset(name)
+                # subset to desired variables and merge
+                final_ds = xr.concat([final_ds, remote_ds], dim="time")
+
+            # save final dataset to netCDF
+            file_name_str = "{0}_merra2_reanalysis_{1}.nc".format(collections, date)
+            filename = os.path.join(path_data, file_name_str)
+
+            encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
+            logging.info("- Saving Data For {0}".format(date))
+            final_ds.to_netcdf(filename, encoding=encoding)
+            logging.info("# Deleting Redundant Files...")
+            for name in nc_files:
+                try:
+                    os.remove(name)
+                except OSError as err:
+                    logging.error("OSError: {0} {1}".format(os.path.split(name)[1], err))
+
+            logging.info("- Finished Deleting Redundant Files...")
+
+        logging.info("---- Finish Merging In Monthly Variables ----")
 
 
     def daily_netcdf(
@@ -416,7 +495,7 @@ class SocketManager:
         if not merra2_var_dict:
             merra2_var_dict = var_list[collection_name]
 
-        logging.info("---- Begin Merging In Time ----")
+        logging.info("---- Begin Merging Yearly ----")
         if merra2_var_dict["collection"].startswith("const"):
             search_str = "*{0}*.nc4".format(merra2_var_dict["collection"])
             nc_files = [str(f) for f in path_data.rglob(search_str)]
@@ -630,7 +709,7 @@ class SocketManager:
         logging.info("- Removing Old Merged Files...")
         if merging_file is not None and os.path.exists(merging_file):
             os.remove(merging_file)
-        logging.info("---- Finish Merging In Time ----")
+        logging.info("---- Finish Merging Yearly ----")
 
 
     def daily_download_and_convert(
@@ -650,7 +729,8 @@ class SocketManager:
         output_dir: Union[str, Path] = None,
         auth: dict = None,
         delete_temp_dir: bool = True,
-        merge_yearly: bool = True,
+        merge_timelapse: str = 'monthly',
+        merge: bool = True,
         thread_num: Optional[int] = 5,
     ):
         """MERRA2 daily download and conversion.
@@ -700,7 +780,9 @@ class SocketManager:
             Dictionary contains login information.
             {"uid": "USERNAME", "password": "PASSWORD"}
         delete_temp_dir : bool
-        merge_yearly: bool
+        merge_timelapse : str
+            Define the timelapse of the merge
+            Select from ['none', 'daily', 'monthly', 'yearly']
         thread_num : Optional[int]
             Number of Files to be downloaded simutanously.
 
@@ -711,6 +793,8 @@ class SocketManager:
         """
         if lat_1 > lat_2 or lon_1 > lon_2:
             raise RuntimeError("Illegal data area selected!")
+        if merge_timelapse not in ['none', 'daily', 'monthly', 'yearly']:
+            raise RuntimeError("Illegal merge timelapse given, select from ['none', 'daily', 'monthly', 'yearly']!")
         logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
         while self.global_retry:
             self.global_retry = False
@@ -784,9 +868,9 @@ class SocketManager:
                     auth=auth,
                     params=parameter,
                     thread_num=thread_num,
-                    merge_yearly=merge_yearly,
+                    merge=merge_timelapse,
                 )
-                if merge_yearly:
+                if merge_timelapse == 'yearly':
                     # Name the output file
                     if initial_year == final_year:
                         file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
@@ -809,15 +893,27 @@ class SocketManager:
             if delete_temp_dir:
                 shutil.rmtree(temp_dir_download)
             else:
-                self.merge_variables(
-                        temp_dir_download,
-                        collection_names,
-                        initial_year,
-                        final_year,
-                        initial_month,
-                        final_month,
-                        initial_day,
-                        final_day,
-                )
+                if merge_timelapse == 'daily' or merge_timelapse == 'monthly':
+                    self.merge_variables_perday(
+                            temp_dir_download,
+                            collection_names,
+                            initial_year,
+                            final_year,
+                            initial_month,
+                            final_month,
+                            initial_day,
+                            final_day,
+                    )
+                if merge_timelapse == 'monthly':
+                    self.merge_variables_permonth(
+                            temp_dir_download,
+                            collection_names,
+                            initial_year,
+                            final_year,
+                            initial_month,
+                            final_month,
+                            initial_day,
+                            final_day,
+                    )
             if self.global_retry:
                 logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)")

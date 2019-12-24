@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--password', type=str, required=True, help='Password for GESDISC authentication.')
     parser.add_argument('--collection_names', type=list, default=['rad', 'slv', 'aer', 'asm'], help='Select from ["rad", "slv", "aer", "asm"], predefined in downloader.variables.var_list')
     parser.add_argument('--delete_temp', type=bool, default=False, help='Select from [True, False], option to delete or save original downloaded files.')
-    parser.add_argument('--merge_yearly', type=bool, default=False, help='Select from [True, False], option to merge original downloaded files into yearly files.')
+    parser.add_argument('--merge_timelapse', type=str, default='monthly', help='Select from [none, daily, monthly, yearly], option to merge original downloaded files into yearly files.')
     parser.add_argument('--download_dir', type=str, default=os.path.join(os.getcwd(), "MERRA2_data"), help='Set the download path for all files, default value is ' + os.path.join(os.getcwd(), "MERRA2_data") + '.')
 
     parser.add_argument('--initial_year', type=int, default=(datetime.date.today() + datetime.timedelta(-60)).year, help='Select from [1980, This Year], default to the year of now.')
@@ -56,7 +56,7 @@ def run(
     output_dir: Optional[Union[str, Path]] = os.path.join(os.getcwd(), "MERRA2_data"),
     auth: dict = None,
     delete_temp_dir: bool = False,
-    merge_yearly: bool = False,
+    merge_timelapse: str = 'monthly',
     thread_num: Optional[int] = 5,
     ):
     """MERRA2 daily download and merge function for the Clear Sky Model.
@@ -106,7 +106,7 @@ def run(
         Dictionary contains login information.
         {"uid": "USERNAME", "password": "PASSWORD"}
     delete_temp_dir : bool
-    merge_yearly : bool
+    merge_timelapse : str
     thread_num : Optional[int]
         Number of Files to be downloaded simutanously.
 
@@ -129,7 +129,7 @@ def run(
         output_dir=output_dir,
         auth=auth,
         delete_temp_dir=delete_temp_dir,
-        merge_yearly=merge_yearly,
+        merge_timelapse=merge_timelapse,
         lat_1=lat_1, lon_1=lon_1,
         lat_2=lat_2, lon_2=lon_2,
         thread_num=thread_num,
@@ -153,7 +153,7 @@ def main():
         output_dir=args.download_dir,
         auth={'uid': args.uid, 'password': args.password},
         delete_temp_dir=args.delete_temp,
-        merge_yearly=args.merge_yearly,
+        merge_timelapse=args.merge_timelapse,
         lat_1=args.bottom_left_lat, lon_1=args.bottom_left_lon,
         lat_2=args.top_right_lat, lon_2=args.top_right_lon,
         thread_num=args.thread_num)
