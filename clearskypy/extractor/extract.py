@@ -30,6 +30,10 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
     lons_unique, lons_index = np.unique(lons, return_inverse=True)
     lats_unique, lats_index = np.unique(lats, return_inverse=True)
 
+    if  datetime == []:
+        var = []
+        return var
+
     try:
         dataset = xr.open_dataset(dataset_path).sel(lat=lats_unique, lon=lons_unique, method='nearest')[
             variables]  # ectract nearest stations point for given lats and lons
@@ -70,7 +74,7 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
     return var
 
 
-def extract_dataset_list(lats, lons, dataset_path_list, variables, datetime, interpolate=True):
+def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, interpolate=True):
     """
     extract variables from dataset
 
@@ -78,7 +82,7 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datetime, int
     :param lons: numpy.ndarray
     :param dataset_path_list: list of string
     :param variables: list of string
-    :param datetime: list of np.datetime64
+    :param datearray: np.ndarray of np.datetime64
     :param interpolate: bool
 
     :return var: list of numpy.ndarray
@@ -95,35 +99,31 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datetime, int
         var_list.append(var)
     return var_list
     '''
+    datearray = np.array(datearray, dtype='datetime64[s]').reshape([datearray.size, ])
+    datearray=datearray.astype(datetime.datetime)
     halfhour = datetime.timedelta(minutes=30)
     var_list = []
     for index_dataset in range(len(dataset_path_list)):
         dataset = xr.open_dataset(dataset_path_list[index_dataset])
-        dataset_starttime = dataset['time'][0]
+        dataset_time = np.array(dataset['time'], dtype='datetime64[s]').astype(datetime.datetime)
+        dataset_starttime = dataset_time[0]
 
-        dataset_endtime = dataset['time'][-1]
+        dataset_endtime = dataset_time[-1]
         datevecs_for_dataset = []
 
-        if index_dataset == 0:
-            for index_datevec in range(len(datetime)):
-                if datetime[index_datevec]<= dataset_endtime + halfhour:
-                    datevecs_for_dataset.append(datetime[index_datevec])
-
-        elif index_dataset == len(dataset_path_list) - 1:
-            for index_datevec in range(len(datetime)):
-                if datetime[index_datevec] > dataset_starttime + halfhour:
-                    datevecs_for_dataset.append(datetime[index_datevec])
-
-        else:
-            for index_datevec in range(len(datetime)):
-                if dataset_starttime - halfhour < datetime[index_datevec]<= dataset_endtime + halfhour:
-                    datevecs_for_dataset.append(datetime[index_datevec])
-
-        var_list.append(
-            extract_dataset(lats, lons, dataset_path_list[index_dataset], variables, datevecs_for_dataset, interpolate))
+        for index_datevec in range(len(datearray)):
+            if dataset_starttime - halfhour < datearray[index_datevec]<= dataset_endtime + halfhour:
+                datevecs_for_dataset.append(datearray[index_datevec])
+        newvar = extract_dataset(lats, lons, dataset_path_list[index_dataset], variables, datevecs_for_dataset, interpolate)
+        if newvar!=[]:
+            var_list.append(newvar)
     var = var_list[0]
+
     for index_varlist in range(len(var_list) - 1):
-        for index_variable in range(len(variables)):
-            var[index_variable] = np.vstack((var[index_variable], var_list[index_varlist + 1][index_variable]))
+        if var_list[index_varlist + 1] == []:
+            continue
+        else:
+            for index_variable in range(len(variables)):
+                var[index_variable] = np.vstack((var[index_variable], var_list[index_varlist + 1][index_variable]))
 
     return var
