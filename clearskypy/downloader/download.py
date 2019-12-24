@@ -313,6 +313,8 @@ class SocketManager:
                             auth=auth,
                             ), dates[start:end]
                         ).get(0.5 * _thread.TIMEOUT_MAX)
+                pool.close()
+                pool.join()
 
                 for i, success in enumerate(rel):
                     if success:
