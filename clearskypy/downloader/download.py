@@ -175,6 +175,8 @@ class SocketManager:
                 logging.error(log + ': File Chunk Type Mismatch')
             except MaybeEncodingError as e:
                 logging.error(log + ': Error in Serialize Results')
+            except Exception as e:
+                logging.error(log + ': ' + str(e))
 
         if retry:
             logging.critical("* File from Date " + str(date) + " Failed Download")
