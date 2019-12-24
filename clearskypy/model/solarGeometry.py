@@ -1,5 +1,7 @@
-import numpy as np
 import datetime
+
+import numpy as np
+
 
 def latlon2solarzenith(lat, lon, datearray):
     """
@@ -45,3 +47,21 @@ def latlon2solarzenith(lat, lon, datearray):
     zen = zen.T
 
     return zen
+
+def data_eext_builder(number_sites, datearray):
+
+    dayth = []
+    datearray = np.array(datearray, dtype='datetime64[s]').reshape([datearray.size, 1])
+    for date in datearray:
+        datetuple = date[0].astype(datetime.datetime).timetuple()
+        dayth.append(datetuple.tm_yday)
+    ndd = np.array(dayth).reshape(datearray.shape)# dayth from 1.1 per year
+
+
+    esc = 1366.1
+    beta = (2 * np.pi * ndd) / 365
+    Eext = esc * (1.00011 + 0.034221 * np.cos(beta) + 0.00128 * np.sin(beta) + 0.000719 * np.cos(
+        2 * beta) + 0.000077 * np.sin(
+        2 * beta))
+    Eext = np.tile(Eext, number_sites)
+    return Eext
