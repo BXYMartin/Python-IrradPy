@@ -1,4 +1,5 @@
 import datetime
+import _thread
 from pydap.client import open_url
 from pydap.cas.urs import setup_session
 from .process import DownloadManager
@@ -121,10 +122,10 @@ class SocketManager:
             )
         else:
             return (
-                'MERRA2_{stream}.{abbrv}.{date}.nc4'
+                'MERRA2_{stream}.{abbrv}.{date}.nc4.{ext}'
                 .format(stream=merra_stream,
                         abbrv=merra2_collection["collection"],
-                        date=date_string, params=params)
+                        date=date_string, ext=file_extension)
             )
 
 
@@ -240,7 +241,7 @@ class SocketManager:
 
         logging.info("---- Begin Analysing Directory ----")
         for name in os.listdir(output_directory):
-            if name.endswith('.nc4.nc') and self.reconstruct_filename(name, params) + str(merge_yearly) not in log:
+            if name.endswith('.nc4.nc') and merra2_collection["collection"] in name and self.reconstruct_filename(name, params) + str(merge_yearly) not in log:
                 intact = False
                 try:
                     lat = xr.open_dataset(os.path.join(output_directory, name)).lat
@@ -264,11 +265,13 @@ class SocketManager:
         logging.info("---- End Analysing Directory ----")
 
         dates = []
+        temp_log = []
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-            if self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly) in log:
+            if self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly) in temp_log or self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly) in log:
                 logging.info("Skipping existing file " + self.build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
                 continue
             else:
+                temp_log.append(self.build_remote_filename(merra2_collection, date, params) + str(merge_yearly))
                 logging.info("Preparing new file " + self.build_remote_filename(merra2_collection, date, params) + " from " + merra2_collection["esdt_dir"])
             dates.append(date)
 
@@ -284,15 +287,33 @@ class SocketManager:
                             params=params,
                             auth=auth,
                             ), dates[start:end]
-                        ).get(9999999)
+                        ).get(0.5 * _thread.TIMEOUT_MAX)
 
                 for i, success in enumerate(rel):
                     if success:
-                        logging.info("% New File from Date " + str(dates[start:end][i]) + " Confirmed")
-                        log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params) + str(merge_yearly))
+                        # Check integrity
+                        name = self.build_remote_filename(merra2_collection, dates[start:end][i], None)
+                        intact = False
+                        try:
+                            lat = xr.open_dataset(os.path.join(output_directory, name)).lat
+                            lon = xr.open_dataset(os.path.join(output_directory, name)).lon
+                            for value in lat:
+                                if value != 0:
+                                    intact = True
+                                    break
+                            for value in lon:
+                                if value != 0:
+                                    intact = True
+                                    break
+                        except Exception:
+                            intact = False
+                        if intact:
+                            logging.info("% New File from Date " + str(dates[start:end][i]) + " Confirmed")
+                            log.append(self.build_remote_filename(merra2_collection, dates[start:end][i], params) + str(merge_yearly))
+                        else:
+                            logging.critical("% New File from Date " + str(dates[start:end][i]) + " Integrity Check Failed")
                     else:
                         logging.critical("% New File from Date " + str(dates[start:end][i]) + " Failed")
-                        print(self.build_remote_filename(merra2_collection, dates[start:end][i], params))
                 np.save(log_file, np.array(log))
             logging.info("---- Download Finished ----")
 
