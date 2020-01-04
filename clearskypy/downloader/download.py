@@ -207,7 +207,6 @@ class SocketManager:
             for sub in self.iter_days(datetime.date(y, m+1, 1), datetime.date(ny, nm+1, 1) + datetime.timedelta(-1)):
                 if sub not in self.iter_days(first, last):
                     logging.error("Missing File From Date {} To Merge Month {}!".format(sub, "{:0>4d}-{:0>2d}".format(y, m+1)))
-                    return
             yield "{:0>4d}-{:0>2d}".format(y, m+1)
 
 
@@ -361,6 +360,7 @@ class SocketManager:
             path_data = Path(path_data)
 
         logging.info("---- Begin Merging In Daily Variables ----")
+        time_start = time.time()
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
             search_str = "*{0}.nc4.nc".format(str(date).replace('-', ''))
             nc_files = [str(f) for f in path_data.rglob(search_str)]
@@ -368,8 +368,7 @@ class SocketManager:
             if len(nc_files) == 0:
                 logging.info("* Skipping Data In {0}".format(date))
                 continue
-
-            logging.info("* Processing Data In {0}".format(date))
+            logging.info("* Processing Data In {0}...".format(date))
 
             final_ds = xr.Dataset()
 
@@ -383,6 +382,7 @@ class SocketManager:
                 remote_ds = xr.open_dataset(name)
                 # subset to desired variables and merge
                 final_ds = xr.merge([final_ds, remote_ds])
+                remote_ds.close()
 
             collections.sort()
             # save final dataset to netCDF
@@ -392,6 +392,7 @@ class SocketManager:
             encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
             logging.info("- Saving Data For {0}".format(date))
             final_ds.to_netcdf(filename, encoding=encoding)
+            final_ds.close()
             logging.info("# Deleting Redundant Files...")
             for name in nc_files:
                 try:
@@ -400,6 +401,9 @@ class SocketManager:
                     logging.error("OSError: {0} {1}".format(os.path.split(name)[1], err))
 
             logging.info("- Finished Deleting Redundant Files...")
+
+            logging.info("* File From Date {} Finished Daily Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, (datetime.date(final_year, final_month, final_day) - date).days, (datetime.date(final_year, final_month, final_day) - date).days * (time.time() - time_start)/60))
+            time_start = time.time()
 
         logging.info("---- Finish Merging In Daily Variables ----")
 
@@ -419,6 +423,7 @@ class SocketManager:
             path_data = Path(path_data)
 
         logging.info("---- Begin Merging In Monthly Variables ----")
+        time_start = time.time()
         for date in self.iter_months(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
             search_str = "*{0}*.nc".format(date)
             nc_files = [str(f) for f in path_data.rglob(search_str)]
@@ -441,6 +446,7 @@ class SocketManager:
                 remote_ds = xr.open_dataset(name)
                 # subset to desired variables and merge
                 final_ds = xr.concat([final_ds, remote_ds], dim="time")
+                remote_ds.close()
 
             # save final dataset to netCDF
             file_name_str = "{0}_merra2_reanalysis_{1}.nc".format(collections, date)
@@ -449,6 +455,7 @@ class SocketManager:
             encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
             logging.info("- Saving Data For {0}".format(date))
             final_ds.to_netcdf(filename, encoding=encoding)
+            final_ds.close()
             logging.info("# Deleting Redundant Files...")
             for name in nc_files:
                 try:
@@ -457,6 +464,10 @@ class SocketManager:
                     logging.error("OSError: {0} {1}".format(os.path.split(name)[1], err))
 
             logging.info("- Finished Deleting Redundant Files...")
+
+            remaining_month = (int(final_year) - int(date.split('-')[0])) * 12 + int(final_month) - int(date.split('-')[1])
+            logging.info("* File From Date {} Finished Monthly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
+            time_start = time.time()
 
         logging.info("---- Finish Merging In Monthly Variables ----")
 
