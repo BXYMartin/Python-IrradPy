@@ -903,9 +903,11 @@ class SocketManager:
                         final_year,
                         merra2_var_dict
                     )
-            if delete_temp_dir:
+            if delete_temp_dir and merge_timelapse == 'yearly':
                 shutil.rmtree(temp_dir_download)
             else:
+                if delete_temp_dir:
+                    logging.info("Delete Temp Directory Only Works for Yearly Merge!")
                 if merge_timelapse == 'daily' or merge_timelapse == 'monthly':
                     self.merge_variables_perday(
                             temp_dir_download,
