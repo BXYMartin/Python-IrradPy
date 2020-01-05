@@ -24,12 +24,22 @@ if __name__ == '__main__':
     # run the rest2 model
     [ghi, dni, dhi] = test_rest2.rest2()
 
+    ghi[np.isnan(ghi)] = 0
+    dni[np.isnan(dni)] = 0
+    dhi[np.isnan(dhi)] = 0
 
-    '''
-    plt.title('example for REST2 model')
-    plt.xlabel('date')
-    plt.ylabel('irrandance')
-    plt.plot(time, ghi[:, 0])
+
+    plt.title('EXAMPLE for REST2 ')
+    plt.xlabel('Time UTC+0')
+    plt.ylabel('Irrandance')
+    plt.plot(time, ghi[:, 0], ls='-')
+
+    plt.plot(time, dni[:, 0], ls='--')
+
+    plt.plot(time, dhi[:, 0], ls='-.')
+
+    plt.legend(['GHI_SITE1', 'DNI_SITE1', 'DHI_SITE1'])
+
     plt.show()
-    '''
+
 

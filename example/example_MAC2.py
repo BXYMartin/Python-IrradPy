@@ -25,11 +25,21 @@ if __name__ == '__main__':
     [Egh, Edn, Edh] = test_mac.mac2(3)
 
 
-    '''
-    plt.title('example for MAC2 model')
-    plt.xlabel('date')
-    plt.ylabel('irrandance')
-    plt.plot(time, ghi[:, 0])
+    Egh[np.isnan(Egh)] = 0
+    Edn[np.isnan(Edn)] = 0
+    Edh[np.isnan(Edh)] = 0
+
+
+    plt.title('EXAMPLE for MAC2 ')
+    plt.xlabel('Time UTC+0')
+    plt.ylabel('Irrandance')
+    plt.plot(time, Egh[:, 0], ls='-')
+
+    plt.plot(time, Edn[:, 0], ls='--')
+
+    plt.plot(time, Edh[:, 0], ls='-.')
+
+    plt.legend(['EGH_SITE1', 'EDN_SITE1', 'EDH_SITE1'])
+
     plt.show()
-    '''
 
