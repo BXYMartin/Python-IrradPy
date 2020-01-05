@@ -78,6 +78,7 @@ class ClearSkyMac:
 
         matlab version coded by Xixi Sun according to Davies and Mckay 1982 <Estimating solar irradiance and components>
         """
+        sza[sza > 90] = np.nan
         datapoints = np.size(sza, 0) * np.size(sza, 1)
         # Extraterrestrial irradiance
         esc = 1353  # author set 1353
@@ -90,7 +91,7 @@ class ClearSkyMac:
         ozone = 0.35  # Davies and Mckay 1982 set ozone a fixed value of 3.5mm
         xo = amm * (ozone * 10)  # Davies and Mckay 1982 ozone unit is mm, here in the code unit is cm
         ao = ((0.1082 * xo) / (np.power((1 + 13.86 * xo), 0.805))) + (
-                    (0.00658 * xo) / (1 + np.power((10.36 * xo), 3))) + (
+                (0.00658 * xo) / (1 + np.power((10.36 * xo), 3))) + (
                      0.002118 * xo / (1 + 0.0042 * xo + 3.23e-6 * np.power(xo, 2)))
         to = 1 - ao
 
@@ -189,7 +190,8 @@ class ClearSkyMac:
         Eext = data_eext_builder(self.lat.size, self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] = self.collect_data()
-        earth_radius = np.power(Eext/1366.1, 0.5)
+        earth_radius = np.power(Eext / 1366.1, 0.5)
         ang_alpha = Angstrom_exponent
         ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
-        return self.clear_sky_mac2(zenith_angle, earth_radius, pressure, water_vapour, ang_beta, ang_alpha, surface_albedo, components)
+        return self.clear_sky_mac2(zenith_angle, earth_radius, pressure, water_vapour, ang_beta, ang_alpha,
+                                   surface_albedo, components)
