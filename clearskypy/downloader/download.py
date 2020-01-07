@@ -348,126 +348,117 @@ class SocketManager:
         self,
         path_data: Union[str, Path],
         collection_names: List[str],
-        initial_year: int,
         final_year: int,
-        initial_month: int,
         final_month: int,
-        initial_day: int,
         final_day: int,
+        date: str,
     ):
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
+
         delete_set = []
-        logging.info("---- Begin Merging In Daily Variables ----")
         time_start = time.time()
-        for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-            search_str = "*{0}.nc4.nc".format(str(date).replace('-', ''))
-            nc_files = [str(f) for f in path_data.rglob(search_str)]
-            nc_files.sort()
-            if len(nc_files) == 0:
-                logging.info("* Skipping Data In {0}".format(date))
-                continue
-            logging.info("* Processing Data In {0}...".format(date))
+    
 
-            final_ds = xr.Dataset()
+        search_str = "*{0}.nc4.nc".format(str(date).replace('-', ''))
+        nc_files = [str(f) for f in path_data.rglob(search_str)]
+        nc_files.sort()
+        if len(nc_files) == 0:
+            logging.info("* Skipping Data In {0}".format(date))
+            return delete_set
+        logging.info("* Processing Data In {0}...".format(date))
 
-            collections = []
-            # a connection/file for each repository
-            for name in nc_files:
-                logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
-                var = os.path.split(name)[1].split('_')[3]
-                if var not in collections:
-                    collections.append(var)
-                remote_ds = xr.open_dataset(name)
-                # subset to desired variables and merge
-                final_ds = xr.merge([final_ds, remote_ds])
-                remote_ds.close()
+        final_ds = xr.Dataset()
 
-            if len(collections) != len(collection_names):
-                logging.error("{0} Collection(s) Required, {1} Collection(s) Collected for {2}, Please Redownload Again!".format(",".join(collection_names), ",".join(collections), date))
-                raise RuntimeError("Partially Downloaded Collection On Date {0}!".format(date))
-            collections.sort()
-            # save final dataset to netCDF
-            file_name_str = "{0}_merra2_reanalysis_{1}.nc".format('-'.join(collections), date)
-            filename = os.path.join(path_data, file_name_str)
+        collections = []
+        # a connection/file for each repository
+        for name in nc_files:
+            logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
+            var = os.path.split(name)[1].split('_')[3]
+            if var not in collections:
+                collections.append(var)
+            remote_ds = xr.open_dataset(name)
+            # subset to desired variables and merge
+            final_ds = xr.merge([final_ds, remote_ds])
+            remote_ds.close()
 
-            encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
-            logging.info("- Saving Data For {0}".format(date))
-            final_ds.to_netcdf(filename, encoding=encoding)
-            final_ds.close()
-            logging.info("# Deleting Redundant Files...")
-            for name in nc_files:
-                delete_set.append(name)
+        if len(collections) != len(collection_names):
+            logging.error("{0} Collection(s) Required, {1} Collection(s) Collected for {2}, Please Redownload Again!".format(",".join(collection_names), ",".join(collections), date))
+            raise RuntimeError("Partially Downloaded Collection On Date {0}!".format(date))
+        collections.sort()
+        # save final dataset to netCDF
+        file_name_str = "{0}_merra2_reanalysis_{1}.nc".format('-'.join(collections), date)
+        filename = os.path.join(path_data, file_name_str)
 
-            logging.info("- Finished Deleting Redundant Files...")
+        encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
+        logging.info("- Saving Data For {0}".format(date))
+        final_ds.to_netcdf(filename, encoding=encoding)
+        final_ds.close()
+        logging.info("# Logging Redundant Files...")
+        for name in nc_files:
+            delete_set.append(name)
 
-            logging.info("* File From Date {} Finished Daily Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, (datetime.date(final_year, final_month, final_day) - date).days, (datetime.date(final_year, final_month, final_day) - date).days * (time.time() - time_start)/60))
-            time_start = time.time()
+        logging.info("- Finished Logging Redundant Files...")
 
-        logging.info("---- Finish Merging In Daily Variables ----")
+        logging.info("* File From Date {} Finished Daily Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, (datetime.date(final_year, final_month, final_day) - date).days, (datetime.date(final_year, final_month, final_day) - date).days * (time.time() - time_start)/60))
+
         return delete_set
 
     def merge_variables_permonth(
         self,
         path_data: Union[str, Path],
         collection_names: List[str],
-        initial_year: int,
         final_year: int,
-        initial_month: int,
         final_month: int,
-        initial_day: int,
         final_day: int,
-
+        date: str,
     ):
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
 
-        delete_set = []
-        logging.info("---- Begin Merging In Monthly Variables ----")
         time_start = time.time()
-        for date in self.iter_months(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-            search_str = "*{0}-*.nc".format(date)
-            nc_files = [str(f) for f in path_data.rglob(search_str)]
-            nc_files.sort()
-            if len(nc_files) == 0:
-                logging.info("* Skipping Data In {0}".format(date))
-                continue
 
-            logging.info("* Processing Data In {0}".format(date))
+        delete_set = []
+    
+        search_str = "*{0}-*.nc".format(date)
+        nc_files = [str(f) for f in path_data.rglob(search_str)]
+        nc_files.sort()
+        if len(nc_files) == 0:
+            logging.info("* Skipping Data In {0}".format(date))
+            return delete_set
 
-            final_ds = xr.open_dataset(nc_files[0])
+        logging.info("* Processing Data In {0}".format(date))
 
-            collections = os.path.split(nc_files[0])[1].split('_')[0]
-            # a connection/file for each repository
-            for name in nc_files[1:]:
-                logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
-                var = os.path.split(name)[1].split('_')[0]
-                if collections is None or len(collections) > len(var):
-                    collections = var
-                remote_ds = xr.open_dataset(name)
-                # subset to desired variables and merge
-                final_ds = xr.concat([final_ds, remote_ds], dim="time")
-                remote_ds.close()
+        final_ds = xr.open_dataset(nc_files[0])
 
-            # save final dataset to netCDF
-            file_name_str = "{0}_merra2_reanalysis_{1}.nc".format(collections, date)
-            filename = os.path.join(path_data, file_name_str)
+        collections = os.path.split(nc_files[0])[1].split('_')[0]
+        # a connection/file for each repository
+        for name in nc_files[1:]:
+            logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
+            var = os.path.split(name)[1].split('_')[0]
+            if collections is None or len(collections) > len(var):
+                collections = var
+            remote_ds = xr.open_dataset(name)
+            # subset to desired variables and merge
+            final_ds = xr.concat([final_ds, remote_ds], dim="time")
+            remote_ds.close()
 
-            encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
-            logging.info("- Saving Data For {0}".format(date))
-            final_ds.to_netcdf(filename, encoding=encoding)
-            final_ds.close()
-            logging.info("# Logging Redundant Files...")
-            for name in nc_files:
-                delete_set.append(name)
+        # save final dataset to netCDF
+        file_name_str = "{0}_merra2_reanalysis_{1}.nc".format(collections, date)
+        filename = os.path.join(path_data, file_name_str)
 
-            logging.info("- Finished Logging Redundant Files...")
+        encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
+        logging.info("- Saving Data For {0}".format(date))
+        final_ds.to_netcdf(filename, encoding=encoding)
+        final_ds.close()
+        logging.info("# Logging Redundant Files...")
+        for name in nc_files:
+            delete_set.append(name)
 
-            remaining_month = (int(final_year) - int(date.split('-')[0])) * 12 + int(final_month) - int(date.split('-')[1])
-            logging.info("* File From Date {} Finished Monthly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
-            time_start = time.time()
+        logging.info("- Finished Logging Redundant Files...")
 
-        logging.info("---- Finish Merging In Monthly Variables ----")
+        remaining_month = (int(final_year) - int(date.split('-')[0])) * 12 + int(final_month) - int(date.split('-')[1])
+        logging.info("* File From Date {} Finished Monthly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
         return delete_set
 
 
@@ -917,46 +908,51 @@ class SocketManager:
                         merge_collection_names.append(collection_name)
 
                 if merge_timelapse == 'daily' or merge_timelapse == 'monthly':
-                    delete_set = self.merge_variables_perday(
+                    logging.info("---- Begin Merging In Daily Variables ----")
+                    for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
+                        delete_set = self.merge_variables_perday(
                             temp_dir_download,
                             merge_collection_names,
-                            initial_year,
                             final_year,
-                            initial_month,
-                            final_month,
-                            initial_day,
+                            final_month, 
                             final_day,
-                    )
-                    logging.info("# Deleting Daily Redundant Files...")
-                    for name in delete_set:
-                        while True:
-                            try:
-                                os.remove(name)
-                                break
-                            except OSError as err:
-                                logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
-                                time.sleep(20)
-                    logging.info("# Finished Deleting Daily Redundant Files...")
+                            date,
+                        )
+                        logging.info("# Deleting Daily Redundant Files...")
+                        for name in delete_set:
+                            while True:
+                                try:
+                                    os.remove(name)
+                                    break
+                                except OSError as err:
+                                    logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
+                                    time.sleep(20)
+                        logging.info("# Finished Deleting Daily Redundant Files...")
+                    logging.info("---- Finish Merging In Daily Variables ----")
+                    
+                    
                 if merge_timelapse == 'monthly':
-                    delete_set = self.merge_variables_permonth(
+                    logging.info("---- Begin Merging In Monthly Variables ----")
+        
+                    for date in self.iter_months(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
+                        delete_set = self.merge_variables_permonth(
                             temp_dir_download,
                             merge_collection_names,
-                            initial_year,
                             final_year,
-                            initial_month,
-                            final_month,
-                            initial_day,
+                            final_month, 
                             final_day,
-                    )
-                    logging.info("# Deleting Merged Daily Redundant Files...")
-                    for name in delete_set:
-                        while True:
-                            try:
-                                os.remove(name)
-                                break
-                            except OSError as err:
-                                logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
-                                time.sleep(20)
-                    logging.info("# Finished Deleting Merged Daily Redundant Files...")
+                            date,
+                        )
+                        logging.info("# Deleting Merged Daily Redundant Files...")
+                        for name in delete_set:
+                            while True:
+                                try:
+                                    os.remove(name)
+                                    break
+                                except OSError as err:
+                                    logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
+                                    time.sleep(20)
+                        logging.info("# Finished Deleting Merged Daily Redundant Files...")
+                    logging.info("---- Finish Merging In Monthly Variables ----")
             if self.global_retry:
                 logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)")
