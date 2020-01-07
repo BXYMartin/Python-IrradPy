@@ -14,9 +14,11 @@ class ClearSkyRest:
             raise Exception('90<= lattitude <=90, reset your latitude')
         if np.max(np.abs(lon)) > 180:
             raise Exception('-180<= lontitude <=180, reset your lontitude')
-        self.lat = lat
-        self.lon = lon
-        self.elev = elev
+
+        station_num = np.size(lat, 0)
+        self.lat = lat.reshape([station_num, ])
+        self.lon = lon.reshape([station_num, ])
+        self.elev = elev.reshape([station_num, 1])
         self.time = time
         self.datadir = datadir
 
@@ -34,6 +36,7 @@ class ClearSkyRest:
                 dirlist.append(datadir + file)
         variables = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR', 'ALBEDO', 'TO3', 'TQV', 'PS']
         [AOD_550, tot_aer_ext, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(self.lat, self.lon, dirlist, variables, self.time, interpolate=True)
+
         [phis] = extract_dataset(self.lat, self.lon, asmlist[0], ['PHIS'], self.time, interpolate=False)
 
         water_vapour = water_vapour * 0.1
@@ -282,9 +285,13 @@ class ClearSkyRest:
         dni[dni < lower] = np.nan
         dhi[dhi < lower] = np.nan
 
+        ghi[np.isnan(ghi)] = 0
+        dni[np.isnan(dni)] = 0
+        dhi[np.isnan(dhi)] = 0
+
         return [ghi, dni, dhi]
 
-    def rest2(self):
+    def REST2v5(self):
         """
         run rest2 model with arguments downloaded in data set
 

@@ -1,42 +1,34 @@
 import numpy as np
 import clearskypy
 import os
-import pvlib
-import xarray as xr
-import datetime
 from matplotlib import pyplot as plt
 
 if __name__ == '__main__':
     # Set the number of sites and randomly generate locations
     # lats,lons need to be np.ndarray
-    station_number = 3
-    lats = np.random.random(station_number) * 90
-    lons = np.random.random(station_number) * 360 - 180
+    lats = np.array([84.2, 10.3, -60.021])
 
+    lons = np.array([-160.444, 5.224, 132.4424])
+    elevs = np.array([12, 638, 977])
     # Set the time you want to run， here we use time from a data set, you can change it.
     # time need to be np.ndarray ,dtype = np.datetime64
-    dataset = xr.open_dataset('./MERRA2_data/aer-rad-slv_merra2_reanalysis_2010-01-01.nc')
-    time = dataset['time'].data
-    time = np.unique(time)
-
+    time = np.arange('2010-01-01T00:15:00', '2010-01-01T23:45:00', dtype='datetime64[m]')
     # create a ClearskyRest class with lat, lon, elev, time and data set path.
-    test_rest2 = clearskypy.model.ClearSkyRest(lats, lons, 1, time, './MERRA2_data/')
-    # run the rest2 model
-    [ghi, dni, dhi] = test_rest2.rest2()
+    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data/')
 
-    ghi[np.isnan(ghi)] = 0
-    dni[np.isnan(dni)] = 0
-    dhi[np.isnan(dhi)] = 0
+    test_rest2 = clearskypy.model.ClearSkyRest(lats, lons, elevs, time, dataset_dir)
+    # run the rest2 model
+    [ghi, dni, dhi] = test_rest2.REST2v5()
 
 
     plt.title('EXAMPLE for REST2 ')
     plt.xlabel('Time UTC+0')
     plt.ylabel('Irrandance')
-    plt.plot(time, ghi[:, 0], ls='-')
+    plt.plot(time, ghi[:, 1], ls='-')
 
-    plt.plot(time, dni[:, 0], ls='--')
+    plt.plot(time, dni[:, 1], ls='--')
 
-    plt.plot(time, dhi[:, 0], ls='-.')
+    plt.plot(time, dhi[:, 1], ls='-.')
 
     plt.legend(['GHI_SITE1', 'DNI_SITE1', 'DHI_SITE1'])
 
