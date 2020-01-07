@@ -14,13 +14,17 @@ if __name__ == '__main__':
      
     # set the time you want to run， here we use time from a data set, you can change it.
     # time need to be np.ndarray ,dtype = np.datetime64
-    time = np.arange('2010-01-01T00:15:00', '2010-01-01T23:45:00', dtype='datetime64[m]')
+    time_start = '2010-01-01T00:15:00'
+    time_end = '2010-01-01T23:45:00'
+    time_delta = 10  # minute
+    time = np.arange(time_start, time_end, time_delta, dtype='datetime64[m]')
     
     # specify where the downloaded dataset is. It is best to use the os.path.join function
-    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data/')
+
+    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
 
     # build the clear-sky REST2v5 model object
-    test_rest2 = clearskypy.model.ClearSkyRest(latitudes, longitudes, elevations, time, dataset_dir)
+    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
     [ghics, dnics, difcs] = test_rest2.REST2v5()
 

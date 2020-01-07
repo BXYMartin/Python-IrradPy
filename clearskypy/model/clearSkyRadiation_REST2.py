@@ -5,7 +5,7 @@ from ..extractor.extract import extract_dataset_list, extract_dataset
 from .solarGeometry import *
 
 
-class ClearSkyRest:
+class ClearSkyREST2v5:
 
     def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir='./MERRA2_data/'):
         if lat.shape != lon.shape:
@@ -52,7 +52,7 @@ class ClearSkyRest:
         #initial no2 default 0.0002
         nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, self.time.size).reshape([self.time.size, 1]), self.lat.size)
         return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
-    def clear_sky_rest2(self, zenith_angle: np.ndarray, Eext: np.ndarray, pressure: np.ndarray,
+    def clear_sky_REST2V5(self, zenith_angle: np.ndarray, Eext: np.ndarray, pressure: np.ndarray,
                          water_vapour: np.ndarray,
                          ozone: np.ndarray, nitrogen_dioxide: np.ndarray, AOD550: np.ndarray,
                          Angstrom_exponent: np.ndarray,
@@ -309,4 +309,4 @@ class ClearSkyRest:
         Eext = data_eext_builder(self.lat.size, self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] = self.collect_data()
-        return self.clear_sky_rest2(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
+        return self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
