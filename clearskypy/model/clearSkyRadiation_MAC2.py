@@ -13,9 +13,11 @@ class ClearSkyMac:
             raise Exception('90<= lattitude <=90, reset your latitude')
         if np.max(np.abs(lon)) > 180:
             raise Exception('-180<= lontitude <=180, reset your lontitude')
-        self.lat = lat
-        self.lon = lon
-        self.elev = elev
+
+        station_num = np.size(lat, 0)
+        self.lat = lat.reshape([station_num, ])
+        self.lon = lon.reshape([station_num, ])
+        self.elev = elev.reshape([station_num, 1])
         self.time = time
         self.datadir = datadir
 
@@ -170,11 +172,17 @@ class ClearSkyMac:
             # Global horizontal irradiance
             EghMAC2 = (EbnMAC2 * np.cos(np.deg2rad(sza)) + DR + DA) / (1 - poub * albedo)
             EghMAC2[EghMAC2 < lower] = lower  # Quality control
+
+            EghMAC2[np.isnan(EghMAC2)] = 0
+            EbnMAC2[np.isnan(EbnMAC2)] = 0
+            EdhMAC2[np.isnan(EdhMAC2)] = 0
+
+
             output = [EghMAC2, EbnMAC2, EdhMAC2]
 
         return output
 
-    def mac2(self, components):
+    def mac2(self, components=3):
         """
         run mac2 model with arguments downloaded in data set
 

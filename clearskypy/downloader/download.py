@@ -384,6 +384,9 @@ class SocketManager:
                 final_ds = xr.merge([final_ds, remote_ds])
                 remote_ds.close()
 
+            if len(collections) != len(collection_names):
+                logging.error("{0} Collection(s) Required, {1} Collection(s) Collected for {2}, Please Redownload Again!".format(",".join(collection_names), ",".join(collections), date))
+                raise RuntimeError("Partially Downloaded Collection On Date {0}!".format(date))
             collections.sort()
             # save final dataset to netCDF
             file_name_str = "{0}_merra2_reanalysis_{1}.nc".format('-'.join(collections), date)
@@ -908,10 +911,19 @@ class SocketManager:
             else:
                 if delete_temp_dir:
                     logging.info("Delete Temp Directory Only Works for Yearly Merge!")
+                merge_collection_names = []
+                for i, collection_name in enumerate(collection_names):
+                    if not merra2_var_dicts:
+                        merra2_var_dict = var_list[collection_name]
+                    else:
+                        merra2_var_dict = merra2_var_dicts[i]
+                    if not merra2_var_dict["collection"].startswith("const"):
+                        merge_collection_names.append(collection_name)
+
                 if merge_timelapse == 'daily' or merge_timelapse == 'monthly':
                     self.merge_variables_perday(
                             temp_dir_download,
-                            collection_names,
+                            merge_collection_names,
                             initial_year,
                             final_year,
                             initial_month,
@@ -922,7 +934,7 @@ class SocketManager:
                 if merge_timelapse == 'monthly':
                     self.merge_variables_permonth(
                             temp_dir_download,
-                            collection_names,
+                            merge_collection_names,
                             initial_year,
                             final_year,
                             initial_month,

@@ -112,7 +112,7 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
         datevecs_for_dataset = []
 
         for index_datevec in range(len(datearray)):
-            if dataset_starttime - halfhour < datearray[index_datevec]<= dataset_endtime + halfhour:
+            if dataset_starttime - halfhour <= datearray[index_datevec]<= dataset_endtime + halfhour:
                 datevecs_for_dataset.append(datearray[index_datevec])
         newvar = extract_dataset(lats, lons, dataset_path_list[index_dataset], variables, datevecs_for_dataset, interpolate)
         if newvar!=[]:

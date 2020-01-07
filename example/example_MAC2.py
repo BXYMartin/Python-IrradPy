@@ -7,37 +7,32 @@ import datetime
 from matplotlib import pyplot as plt
 
 if __name__ == '__main__':
-    # Set the number of sites and randomly generate locations
     # lats,lons need to be np.ndarray
-    station_number = 1
-    lats = np.random.random(station_number) * 0
-    lons = np.random.random(station_number) * 0
 
-    # Set the time you want to run， here we use time from a data set, you can change it.
+    lats = np.array([84.2, 10.3, -60.021])
+
+    lons = np.array([-160.444, 5.224, 132.4424])
+
+    elevs = np.array([12, 638, 977])
     # time need to be np.ndarray ,dtype = np.datetime64
-    dataset = xr.open_dataset('./MERRA2_data/aer-rad-slv_merra2_reanalysis_2010-01-01.nc')
-    time = dataset['time'].data
-    time = np.unique(time)
+    time = np.arange('2010-01-01T00:15:00', '2010-01-01T23:45:00', dtype='datetime64[m]')
+
+    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data/')
 
     # create a ClearskyRest class with lat, lon, elev, time and data set path.
-    test_mac = clearskypy.model.ClearSkyMac(lats, lons, 1, time, './MERRA2_data/')
+    test_mac = clearskypy.model.ClearSkyMac(lats, lons, elevs, time, dataset_dir)
     # run the mac2 model
-    [Egh, Edn, Edh] = test_mac.mac2(3)
-
-    Egh[np.isnan(Egh)] = 0
-    Edn[np.isnan(Edn)] = 0
-    Edh[np.isnan(Edh)] = 0
-
+    [Egh, Edn, Edh] = test_mac.mac2()
 
 
     plt.title('EXAMPLE for MAC2 ')
     plt.xlabel('Time UTC+0')
     plt.ylabel('Irrandance')
-    plt.plot(time, Egh[:, 0], ls='-')
+    plt.plot(time, Egh[:, 1], ls='-')
 
-    plt.plot(time, Edn[:, 0], ls='--')
+    plt.plot(time, Edn[:, 1], ls='--')
 
-    plt.plot(time, Edh[:, 0], ls='-.')
+    plt.plot(time, Edh[:, 1], ls='-.')
 
     plt.legend(['EGH_SITE1', 'EDN_SITE1', 'EDH_SITE1'])
 
