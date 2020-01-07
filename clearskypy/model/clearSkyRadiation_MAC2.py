@@ -4,7 +4,7 @@ from ..extractor.extract import extract_dataset_list, extract_dataset
 from .solarGeometry import *
 
 
-class ClearSkyMac:
+class ClearSkyMAC:
 
     def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir='./MERRA2_data/'):
         if lat.shape != lon.shape:
@@ -57,7 +57,7 @@ class ClearSkyMac:
                                    self.lat.size)
         return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
 
-    def clear_sky_mac2(self, sza, earth_radius, pressure, wv, ang_beta, ang_alpha, albedo, components):
+    def clear_sky_MAC2(self, sza, earth_radius, pressure, wv, ang_beta, ang_alpha, albedo, components):
         """
         clear_sky_model mac2 1982
 
@@ -182,7 +182,7 @@ class ClearSkyMac:
 
         return output
 
-    def mac2(self, components=3):
+    def MAC2(self, components=3):
         """
         run mac2 model with arguments downloaded in data set
 
@@ -201,5 +201,5 @@ class ClearSkyMac:
         earth_radius = np.power(Eext / 1366.1, 0.5)
         ang_alpha = Angstrom_exponent
         ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
-        return self.clear_sky_mac2(zenith_angle, earth_radius, pressure, water_vapour, ang_beta, ang_alpha,
+        return self.clear_sky_MAC2(zenith_angle, earth_radius, pressure, water_vapour, ang_beta, ang_alpha,
                                    surface_albedo, components)
