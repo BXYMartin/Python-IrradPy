@@ -3,25 +3,34 @@ import datetime
 import numpy as np
 
 
+def dayth_hourth(datetime):
+    datetuple = datetime.timetuple()
+    dayth = datetuple.tm_yday
+    hourth = datetuple.tm_hour + datetuple.tm_min / 60
+
+    return dayth, hourth
+
+
 def latlon2solarzenith(lat, lon, datearray):
     """
-
+    n: station number
+    m: date number
     :param lat: np.ndarray of lat vector (n,1)
     :param lon: np.ndarray of lon vector (n,1)
-    :param datearray: np.ndarray of np.datetim64 which can get from dataset ; vector (m,1)
+    :param datearray: np.ndarray of np.datetim64 which can get from dataset ; vector (m,n)
     :return: zenith of (n,m)
     """
-    dayth = []
-    hourth = []
-    datearray = np.array(datearray, dtype='datetime64[s]').reshape([datearray.size, 1])
+    time = datearray.astype(datetime.datetime)
+
+    yday = np.vectorize(dayth_hourth)
+
+    dayth, hourth = yday(time)
+
+    dayth = dayth.T
+    hourth = hourth.T
+
     lat = lat.reshape([lat.size, 1])
     lon = lon.reshape([lon.size, 1])
-    for date in datearray:
-        datetuple = date[0].astype(datetime.datetime).timetuple()
-        dayth.append(datetuple.tm_yday)
-        hourth.append(datetuple.tm_hour + datetuple.tm_min / 60)
-    dayth = np.array(dayth).reshape(datearray.shape).T
-    hourth = np.array(hourth).reshape(datearray.shape).T
 
     Bd = (360 / 365.242) * (dayth - 1)
     Br = np.deg2rad(Bd)
@@ -48,20 +57,30 @@ def latlon2solarzenith(lat, lon, datearray):
 
     return zen
 
-def data_eext_builder(number_sites, datearray):
 
-    dayth = []
-    datearray = np.array(datearray, dtype='datetime64[s]').reshape([datearray.size, 1])
-    for date in datearray:
-        datetuple = date[0].astype(datetime.datetime).timetuple()
-        dayth.append(datetuple.tm_yday)
-    ndd = np.array(dayth).reshape(datearray.shape)# dayth from 1.1 per year
+def data_eext_builder(datearray):
+    datearray = datearray.astype(datetime.datetime)
 
+    yday = np.vectorize(dayth_hourth)
+
+    ndd, hourth = yday(datearray)
 
     esc = 1366.1
     beta = (2 * np.pi * ndd) / 365
     Eext = esc * (1.00011 + 0.034221 * np.cos(beta) + 0.00128 * np.sin(beta) + 0.000719 * np.cos(
         2 * beta) + 0.000077 * np.sin(
         2 * beta))
-    Eext = np.tile(Eext, number_sites)
+
     return Eext
+
+
+def timeseries_builder(timeset, delta):
+    timeseries = np.arange(timeset[0][0], timeset[0][1], delta, dtype='datetime64[m]')[:, np.newaxis]
+
+    for index in range(len(timeset) - 1):
+        new_series = np.arange(timeset[index + 1][0], timeset[index + 1][1], delta, dtype='datetime64[m]')[:,
+                     np.newaxis]
+
+        timeseries = np.hstack((timeseries, new_series))
+
+    return timeseries

@@ -53,8 +53,8 @@ class ClearSkyMAC:
         tot_angst[tot_angst < 0] = 0
 
         # initial no2 default 0.0002
-        nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, self.time.size).reshape([self.time.size, 1]),
-                                   self.lat.size)
+        nitrogen_dioxide = np.tile(
+            np.linspace(0.0002, 0.0002, np.size(self.time, 0)).reshape([np.size(self.time, 0), 1]), self.lat.size)
         return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
 
     def clear_sky_MAC2(self, sza, earth_radius, pressure, wv, ang_beta, ang_alpha, albedo, components):
@@ -195,7 +195,7 @@ class ClearSkyMAC:
         :return: [Egh, Edn, Edh]
         """
         zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
-        Eext = data_eext_builder(self.lat.size, self.time)
+        Eext = data_eext_builder(self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] = self.collect_data()
         earth_radius = np.power(Eext / 1366.1, 0.5)

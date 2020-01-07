@@ -14,17 +14,20 @@ if __name__ == '__main__':
      
     # set the time you want to run， here we use time from a data set, you can change it.
     # time need to be np.ndarray ,dtype = np.datetime64
-    time_start = '2010-01-01T00:15:00'
-    time_end = '2010-01-01T23:45:00'
+
     time_delta = 10  # minute
-    time = np.arange(time_start, time_end, time_delta, dtype='datetime64[m]')
-    
+    # timedef is a list of (start time , end time) for each site
+    timedef = [('2010-01-01T00:15:00', '2010-01-01T23:45:00'), ('2010-06-01T00:15:00', '2010-06-01T23:45:00'),
+               ('2010-09-01T00:15:00', '2010-09-01T23:45:00')]
+    # use timeseries_builder to build time series for different station
+    time_new = clearskypy.model.timeseries_builder(timedef, time_delta)
+
     # specify where the downloaded dataset is. It is best to use the os.path.join function
 
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
 
     # build the clear-sky REST2v5 model object
-    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
+    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time_new, dataset_dir)
     # run the REST2v5 clear-sky model
     [ghics, dnics, difcs] = test_rest2.REST2v5()
 
@@ -32,11 +35,11 @@ if __name__ == '__main__':
     plt.title('EXAMPLE for REST2 ')
     plt.xlabel('Time UTC+0')
     plt.ylabel('Irrandance')
-    plt.plot(time, ghics[:, 1], ls='-')
+    plt.plot(time_new[:, 1], ghics[:, 1], ls='-')
 
-    plt.plot(time, dnics[:, 1], ls='--')
+    plt.plot(time_new[:, 1], dnics[:, 1], ls='--')
 
-    plt.plot(time, difcs[:, 1], ls='-.')
+    plt.plot(time_new[:, 1], difcs[:, 1], ls='-.')
 
     plt.legend(['GHI_SITE1', 'DNI_SITE1', 'DHI_SITE1'])
 

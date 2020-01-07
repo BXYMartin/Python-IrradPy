@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import os
 from ..extractor.extract import extract_dataset_list, extract_dataset
 from .solarGeometry import *
@@ -50,7 +49,7 @@ class ClearSkyREST2v5:
         tot_angst[tot_angst < 0] = 0
 
         #initial no2 default 0.0002
-        nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, self.time.size).reshape([self.time.size, 1]), self.lat.size)
+        nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, np.size(self.time, 0)).reshape([np.size(self.time, 0), 1]), self.lat.size)
         return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
     def clear_sky_REST2V5(self, zenith_angle: np.ndarray, Eext: np.ndarray, pressure: np.ndarray,
                          water_vapour: np.ndarray,
@@ -85,7 +84,9 @@ class ClearSkyREST2v5:
         you can run this model with your arguments manually, but recommend run model by rest2() automatically with
         arguments by default.
         """
-
+        print(zenith_angle.shape)
+        print(pressure.shape)
+        print(AOD550.shape)
         Angstrom_exponent[Angstrom_exponent > 2.5] = 2.5
         Angstrom_exponent[Angstrom_exponent < 0] = 0
         pressure[pressure > 1100] = 1100
@@ -306,7 +307,7 @@ class ClearSkyREST2v5:
         """
         zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
         zenith_angle = np.deg2rad(zenith_angle)
-        Eext = data_eext_builder(self.lat.size, self.time)
+        Eext = data_eext_builder(self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] = self.collect_data()
         return self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
