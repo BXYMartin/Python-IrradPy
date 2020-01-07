@@ -354,11 +354,10 @@ class SocketManager:
         final_month: int,
         initial_day: int,
         final_day: int,
-
     ):
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
-
+        delete_set = []
         logging.info("---- Begin Merging In Daily Variables ----")
         time_start = time.time()
         for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
@@ -398,10 +397,7 @@ class SocketManager:
             final_ds.close()
             logging.info("# Deleting Redundant Files...")
             for name in nc_files:
-                try:
-                    os.remove(name)
-                except OSError as err:
-                    logging.error("OSError: {0} {1}".format(os.path.split(name)[1], err))
+                delete_set.append(name)
 
             logging.info("- Finished Deleting Redundant Files...")
 
@@ -409,6 +405,7 @@ class SocketManager:
             time_start = time.time()
 
         logging.info("---- Finish Merging In Daily Variables ----")
+        return delete_set
 
     def merge_variables_permonth(
         self,
@@ -425,10 +422,11 @@ class SocketManager:
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
 
+        delete_set = []
         logging.info("---- Begin Merging In Monthly Variables ----")
         time_start = time.time()
         for date in self.iter_months(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
-            search_str = "*{0}*.nc".format(date)
+            search_str = "*{0}-*.nc".format(date)
             nc_files = [str(f) for f in path_data.rglob(search_str)]
             nc_files.sort()
             if len(nc_files) == 0:
@@ -459,20 +457,18 @@ class SocketManager:
             logging.info("- Saving Data For {0}".format(date))
             final_ds.to_netcdf(filename, encoding=encoding)
             final_ds.close()
-            logging.info("# Deleting Redundant Files...")
+            logging.info("# Logging Redundant Files...")
             for name in nc_files:
-                try:
-                    os.remove(name)
-                except OSError as err:
-                    logging.error("OSError: {0} {1}".format(os.path.split(name)[1], err))
+                delete_set.append(name)
 
-            logging.info("- Finished Deleting Redundant Files...")
+            logging.info("- Finished Logging Redundant Files...")
 
             remaining_month = (int(final_year) - int(date.split('-')[0])) * 12 + int(final_month) - int(date.split('-')[1])
             logging.info("* File From Date {} Finished Monthly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
             time_start = time.time()
 
         logging.info("---- Finish Merging In Monthly Variables ----")
+        return delete_set
 
 
     def daily_netcdf(
@@ -921,7 +917,7 @@ class SocketManager:
                         merge_collection_names.append(collection_name)
 
                 if merge_timelapse == 'daily' or merge_timelapse == 'monthly':
-                    self.merge_variables_perday(
+                    delete_set = self.merge_variables_perday(
                             temp_dir_download,
                             merge_collection_names,
                             initial_year,
@@ -931,8 +927,18 @@ class SocketManager:
                             initial_day,
                             final_day,
                     )
+                    logging.info("# Deleting Daily Redundant Files...")
+                    for name in delete_set:
+                        while True:
+                            try:
+                                os.remove(name)
+                                break
+                            except OSError as err:
+                                logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
+                                time.sleep(20)
+                    logging.info("# Finished Deleting Daily Redundant Files...")
                 if merge_timelapse == 'monthly':
-                    self.merge_variables_permonth(
+                    delete_set = self.merge_variables_permonth(
                             temp_dir_download,
                             merge_collection_names,
                             initial_year,
@@ -942,5 +948,15 @@ class SocketManager:
                             initial_day,
                             final_day,
                     )
+                    logging.info("# Deleting Merged Daily Redundant Files...")
+                    for name in delete_set:
+                        while True:
+                            try:
+                                os.remove(name)
+                                break
+                            except OSError as err:
+                                logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
+                                time.sleep(20)
+                    logging.info("# Finished Deleting Merged Daily Redundant Files...")
             if self.global_retry:
                 logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)")
