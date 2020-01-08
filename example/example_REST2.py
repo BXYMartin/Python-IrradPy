@@ -30,17 +30,33 @@ if __name__ == '__main__':
     # run the REST2v5 clear-sky model
     [ghics, dnics, difcs] = test_rest2.REST2v5()
 
+    plt.figure(1)
 
     plt.title('EXAMPLE for REST2 ')
+
+    plt.subplot(221)
+    plt.plot(time[:, 0], ghics[:, 0], ls='-')
+    plt.plot(time[:, 0], dnics[:, 0], ls='--')
+    plt.plot(time[:, 0], difcs[:, 0], ls='-.')
     plt.xlabel('Time UTC+0')
     plt.ylabel('Irrandance')
-    plt.plot(time_new[:, 1], ghics[:, 1], ls='-')
-
-    plt.plot(time_new[:, 1], dnics[:, 1], ls='--')
-
-    plt.plot(time_new[:, 1], difcs[:, 1], ls='-.')
-
     plt.legend(['GHI_SITE1', 'DNI_SITE1', 'DHI_SITE1'])
+
+    plt.subplot(222)
+    plt.plot(time[:, 1], ghics[:, 1], ls='-')
+    plt.plot(time[:, 1], dnics[:, 1], ls='--')
+    plt.plot(time[:, 1], difcs[:, 1], ls='-.')
+    plt.xlabel('Time UTC+0')
+    plt.ylabel('Irrandance')
+    plt.legend(['GHI_SITE2', 'DNI_SITE2', 'DHI_SITE2'])
+
+    plt.subplot(223)
+    plt.plot(time[:, 2], ghics[:, 2], ls='-')
+    plt.plot(time[:, 2], dnics[:, 2], ls='--')
+    plt.plot(time[:, 2], difcs[:, 2], ls='-.')
+    plt.xlabel('Time UTC+0')
+    plt.ylabel('Irrandance')
+    plt.legend(['GHI_SITE3', 'DNI_SITE3', 'DHI_SITE3'])
 
     plt.show()
 

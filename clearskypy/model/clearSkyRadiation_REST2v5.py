@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from ..extractor.extract import extract_dataset_list, extract_dataset
+from ..extractor.extract import extract_dataset_list, extract_dataset, extract_for_MERRA2
 from .solarGeometry import *
 
 
@@ -21,38 +21,6 @@ class ClearSkyREST2v5:
         self.time = time
         self.datadir = datadir
 
-    def collect_data(self):
-        datadir = self.datadir
-        datadirlist = [os.listdir(datadir)][0]
-        dirlist = []
-        asmlist = []
-        for file in datadirlist:
-            if 'index' in file:
-                continue
-            elif 'const_2d_asm' in file:
-                asmlist.append(datadir + file)
-            elif 'merra2' in file:
-                dirlist.append(datadir + file)
-        variables = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR', 'ALBEDO', 'TO3', 'TQV', 'PS']
-        [AOD_550, tot_aer_ext, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(self.lat, self.lon, dirlist, variables, self.time, interpolate=True)
-
-        [phis] = extract_dataset(self.lat, self.lon, asmlist[0], ['PHIS'], self.time, interpolate=False)
-
-        water_vapour = water_vapour * 0.1
-        ozone = ozone * 0.001
-        h = phis / 9.80665
-        h0 = self.elev
-        Ha = 2100
-        scale_height = np.exp((h0 - h) / Ha)
-        AOD_550 = AOD_550 * scale_height.T
-        water_vapour = water_vapour * scale_height.T
-        tot_angst[tot_angst < 0] = 0
-
-        #initial no2 default 0.0002
-        nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, np.size(self.time, 0)).reshape([np.size(self.time, 0), 1]), self.lat.size)
-        return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
-  
-    
     def clear_sky_REST2V5(self, zenith_angle: np.ndarray, Eext: np.ndarray, pressure: np.ndarray,
                          water_vapour: np.ndarray,
                          ozone: np.ndarray, nitrogen_dioxide: np.ndarray, AOD550: np.ndarray,
@@ -86,9 +54,6 @@ class ClearSkyREST2v5:
         you can run this model with your arguments manually, but recommend run model by rest2() automatically with
         arguments by default.
         """
-        print(zenith_angle.shape)
-        print(pressure.shape)
-        print(AOD550.shape)
         Angstrom_exponent[Angstrom_exponent > 2.5] = 2.5
         Angstrom_exponent[Angstrom_exponent < 0] = 0
         pressure[pressure > 1100] = 1100
@@ -312,5 +277,5 @@ class ClearSkyREST2v5:
         zenith_angle = np.deg2rad(zenith_angle)
         Eext = data_eext_builder(self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
-         nitrogen_dioxide] = self.collect_data()
+         nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
         return self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)

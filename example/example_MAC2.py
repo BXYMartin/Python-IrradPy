@@ -21,6 +21,7 @@ if __name__ == '__main__':
     # timedef is a list of [(start time , end time)] for each location defined. 
     timedef = [('2010-01-01T00:15:00', '2010-01-01T23:45:00'), 
                ('2010-06-01T00:15:00', '2010-06-01T23:45:00'),
+
                ('2010-09-01T00:15:00', '2010-09-01T23:45:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta)
@@ -29,21 +30,37 @@ if __name__ == '__main__':
     dataset_dir = os.path.join("E:", "MERRA2", "MERRA2_data", '')
     
     # create a ClearskyRest class with lat, lon, elev, time and data set path.
-    test_mac = clearskypy.model.ClearSkyMAC(latitudes, longitudes, elevations, time, dataset_dir)
+    test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir)
     # run the mac2 model
     [Egh, Edn, Edh] = test_mac.MAC2()
 
+    plt.figure(1)
 
     plt.title('EXAMPLE for MAC2 ')
+
+    plt.subplot(221)
+    plt.plot(time[:, 0], Egh[:, 0], ls='-')
+    plt.plot(time[:, 0], Edn[:, 0], ls='--')
+    plt.plot(time[:, 0], Edh[:, 0], ls='-.')
     plt.xlabel('Time UTC+0')
     plt.ylabel('Irrandance')
-    plt.plot(time_new[:, 1], Egh[:, 1], ls='-')
+    plt.legend(['GHI_SITE1', 'DNI_SITE1', 'DHI_SITE1'])
 
-    plt.plot(time_new[:, 1], Edn[:, 1], ls='--')
+    plt.subplot(222)
+    plt.plot(time[:, 1], Egh[:, 1], ls='-')
+    plt.plot(time[:, 1], Edn[:, 1], ls='--')
+    plt.plot(time[:, 1], Edh[:, 1], ls='-.')
+    plt.xlabel('Time UTC+0')
+    plt.ylabel('Irrandance')
+    plt.legend(['GHI_SITE2', 'DNI_SITE2', 'DHI_SITE2'])
 
-    plt.plot(time_new[:, 1], Edh[:, 1], ls='-.')
-
-    plt.legend(['EGH_SITE1', 'EDN_SITE1', 'EDH_SITE1'])
+    plt.subplot(223)
+    plt.plot(time[:, 2], Egh[:, 2], ls='-')
+    plt.plot(time[:, 2], Edn[:, 2], ls='--')
+    plt.plot(time[:, 2], Edh[:, 2], ls='-.')
+    plt.xlabel('Time UTC+0')
+    plt.ylabel('Irrandance')
+    plt.legend(['GHI_SITE3', 'DNI_SITE3', 'DHI_SITE3'])
 
     plt.show()
 

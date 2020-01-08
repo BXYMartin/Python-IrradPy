@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from ..extractor.extract import extract_dataset_list, extract_dataset
+from ..extractor.extract import extract_dataset_list, extract_dataset, extract_for_MERRA2
 from .solarGeometry import *
 
 
@@ -20,45 +20,6 @@ class ClearSkyMAC2:
         self.elev = elev.reshape([station_num, 1])
         self.time = time
         self.datadir = datadir
-
-    def collect_data(self):
-        """
-        Extract data from the MERRA2 database.
-        """
-        datadir = self.datadir
-        datadirlist = [os.listdir(datadir)][0]
-        dirlist = []
-        asmlist = []
-        for file in datadirlist:
-            if 'index' in file:
-                continue
-            elif 'const_2d_asm' in file:
-                asmlist.append(datadir + file)
-            elif 'merra2' in file:
-                dirlist.append(datadir + file)
-        variables = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR', 'ALBEDO', 'TO3', 'TQV', 'PS']
-        [AOD_550, tot_aer_ext, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(self.lat,
-                                                                                                        interpolate=True)
-        # Get the MERRA2 cell height
-        [phis] = extract_dataset(self.lat, self.lon, asmlist[0], ['PHIS'], self.time, interpolate=False)
-        
-        # apply conversions from raw MERRA2 units to clear-sky model units
-        water_vapour = water_vapour * 0.1
-        ozone = ozone * 0.001
-        # convert height into metres
-        h = phis / 9.80665
-        h0 = self.elev
-        # perform scale height correction
-        Ha = 2100
-        scale_height = np.exp((h0 - h) / Ha)
-        AOD_550 = AOD_550 * scale_height.T
-        water_vapour = water_vapour * scale_height.T
-        tot_angst[tot_angst < 0] = 0
-
-        # As no NO2 data in MERRA2, set to default value of 0.0002
-        nitrogen_dioxide = np.tile(
-            np.linspace(0.0002, 0.0002, np.size(self.time, 0)).reshape([np.size(self.time, 0), 1]), self.lat.size)
-        return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
 
     def clear_sky_MAC2(self, sza, earth_radius, pressure, wv, ang_beta, ang_alpha, albedo, components):
         """
@@ -180,7 +141,6 @@ class ClearSkyMAC2:
             EbnMAC2[np.isnan(EbnMAC2)] = 0
             EdhMAC2[np.isnan(EdhMAC2)] = 0
 
-
             output = [EghMAC2, EbnMAC2, EdhMAC2]
 
         return output
@@ -200,7 +160,7 @@ class ClearSkyMAC2:
         zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
         Eext = data_eext_builder(self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
-         nitrogen_dioxide] = self.collect_data()
+         nitrogen_dioxide] = extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
         earth_radius = np.power(Eext / 1366.1, 0.5)
         ang_alpha = Angstrom_exponent
         ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
