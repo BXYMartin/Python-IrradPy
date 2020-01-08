@@ -4,7 +4,7 @@ from ..extractor.extract import extract_dataset_list, extract_dataset
 from .solarGeometry import *
 
 
-class ClearSkyMAC:
+class ClearSkyMAC2:
 
     def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir='./MERRA2_data/'):
         if lat.shape != lon.shape:
@@ -22,6 +22,9 @@ class ClearSkyMAC:
         self.datadir = datadir
 
     def collect_data(self):
+        """
+        Extract data from the MERRA2 database.
+        """
         datadir = self.datadir
         datadirlist = [os.listdir(datadir)][0]
         dirlist = []
@@ -35,31 +38,31 @@ class ClearSkyMAC:
                 dirlist.append(datadir + file)
         variables = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR', 'ALBEDO', 'TO3', 'TQV', 'PS']
         [AOD_550, tot_aer_ext, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(self.lat,
-                                                                                                        self.lon,
-                                                                                                        dirlist,
-                                                                                                        variables,
-                                                                                                        self.time,
                                                                                                         interpolate=True)
+        # Get the MERRA2 cell height
         [phis] = extract_dataset(self.lat, self.lon, asmlist[0], ['PHIS'], self.time, interpolate=False)
-
+        
+        # apply conversions from raw MERRA2 units to clear-sky model units
         water_vapour = water_vapour * 0.1
         ozone = ozone * 0.001
+        # convert height into metres
         h = phis / 9.80665
         h0 = self.elev
+        # perform scale height correction
         Ha = 2100
         scale_height = np.exp((h0 - h) / Ha)
         AOD_550 = AOD_550 * scale_height.T
         water_vapour = water_vapour * scale_height.T
         tot_angst[tot_angst < 0] = 0
 
-        # initial no2 default 0.0002
+        # As no NO2 data in MERRA2, set to default value of 0.0002
         nitrogen_dioxide = np.tile(
             np.linspace(0.0002, 0.0002, np.size(self.time, 0)).reshape([np.size(self.time, 0), 1]), self.lat.size)
         return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
 
     def clear_sky_MAC2(self, sza, earth_radius, pressure, wv, ang_beta, ang_alpha, albedo, components):
         """
-        clear_sky_model mac2 1982
+        clear_sky_model MAC2 1982
 
         Every Variable Need to be np.ndarry. np.matrix will cause fatal error
 

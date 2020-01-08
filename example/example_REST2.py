@@ -12,22 +12,21 @@ if __name__ == '__main__':
     # elevations are in metres, this influences some solar elevation angles and scale height corrections
     elevations = np.array([30, 50.2, 62])
      
-    # set the time you want to run， here we use time from a data set, you can change it.
-    # time need to be np.ndarray ,dtype = np.datetime64
-
+    # set the time series that you wish to model. Thi can be unique per locaton.
+    # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
-    # timedef is a list of (start time , end time) for each site
-    timedef = [('2010-01-01T00:15:00', '2010-01-01T23:45:00'), ('2010-06-01T00:15:00', '2010-06-01T23:45:00'),
+    # timedef is a list of [(start time , end time)] for each location defined. 
+    timedef = [('2010-01-01T00:15:00', '2010-01-01T23:45:00'), 
+               ('2010-06-01T00:15:00', '2010-06-01T23:45:00'),
                ('2010-09-01T00:15:00', '2010-09-01T23:45:00')]
     # use timeseries_builder to build time series for different station
-    time_new = clearskypy.model.timeseries_builder(timedef, time_delta)
+    time = clearskypy.model.timeseries_builder(timedef, time_delta)
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
-
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
 
     # build the clear-sky REST2v5 model object
-    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time_new, dataset_dir)
+    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
     [ghics, dnics, difcs] = test_rest2.REST2v5()
 
