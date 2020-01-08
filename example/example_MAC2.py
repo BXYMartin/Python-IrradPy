@@ -21,7 +21,6 @@ if __name__ == '__main__':
     # timedef is a list of [(start time , end time)] for each location defined. 
     timedef = [('2010-01-01T00:15:00', '2010-01-01T23:45:00'), 
                ('2010-06-01T00:15:00', '2010-06-01T23:45:00'),
-
                ('2010-09-01T00:15:00', '2010-09-01T23:45:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta)
