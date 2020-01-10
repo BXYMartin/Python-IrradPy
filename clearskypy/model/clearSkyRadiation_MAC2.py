@@ -21,7 +21,7 @@ class ClearSkyMAC2:
         self.time = time
         self.datadir = datadir
 
-    def clear_sky_MAC2(self, sza, earth_radius, pressure, wv, ang_beta, ang_alpha, albedo, components):
+    def clear_sky_MAC2(self, sza, Angstrom_exponent, pressure, wv, AOD550, albedo, components):
         """
         clear_sky_model MAC2 1982
 
@@ -44,6 +44,10 @@ class ClearSkyMAC2:
 
         matlab version coded by Xixi Sun according to Davies and Mckay 1982 <Estimating solar irradiance and components>
         """
+        earth_radius = np.power(Eext / 1366.1, 0.5)
+        ang_alpha = Angstrom_exponent
+        ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
+        
         sza[sza > 90] = np.nan
         datapoints = np.size(sza, 0) * np.size(sza, 1)
         # Extraterrestrial irradiance
@@ -161,8 +165,5 @@ class ClearSkyMAC2:
         Eext = data_eext_builder(self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] = extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
-        earth_radius = np.power(Eext / 1366.1, 0.5)
-        ang_alpha = Angstrom_exponent
-        ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
-        return self.clear_sky_MAC2(zenith_angle, earth_radius, pressure, water_vapour, ang_beta, ang_alpha,
-                                   surface_albedo, components)
+
+        return self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550, surface_albedo, components)
