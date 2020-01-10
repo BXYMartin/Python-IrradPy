@@ -70,14 +70,13 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
 
     else:
         dataset_interpolation = dataset
-
     var = []
     for index_variables in variables:
         if interpolate:
-            station_data = np.empty([len(datetime), len(lats)], dtype=float)
+            station_data = np.empty([len(datetime_for_station[0]), len(lats)], dtype=float)
             for index_station in range(len(lons)):
                 if datetime_for_station[index_station].size == 0:
-                    station_data[:, index_station] = np.full([1, len(datetime)], np.nan)
+                    station_data[:, index_station] = np.full([1, len(datetime_for_station[0])], np.nan)
                 else:
                     station_data[:, index_station] = np.array([dataset_interpolation[index_variables].sel(
                         lat=lats[index_station], lon=lons[index_station], method='nearest').sel(
@@ -131,6 +130,15 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
 
         datevecs_for_dataset = date_check_vec(datearray, dataset_starttime - halfhour, dataset_endtime + halfhour)
 
+        set_cover_start = (~np.isnat(datevecs_for_dataset[:, 0])).argmax(axis=0)
+
+        set_cover_end = np.size(datevecs_for_dataset, 0) - 1 - (~np.isnat(datevecs_for_dataset[:, 0]))[::-1].argmax(
+            axis=0)
+        if index_dataset == 0:
+            time_cover_start = set_cover_start
+
+        if index_dataset == len(dataset_path_list) - 1:
+            time_cover_end = set_cover_end
         newvar = extract_dataset(lats, lons, dataset_path_list[index_dataset], variables, datevecs_for_dataset,
                                  interpolate)
         if newvar != []:
@@ -143,6 +151,17 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
         else:
             for index_variable in range(len(variables)):
                 var[index_variable] = np.vstack((var[index_variable], var_list[index_varlist + 1][index_variable]))
+    if time_cover_start > 0:
+        for index_variable in range(len(variables)):
+            var[index_variable] = np.vstack(
+                (np.full((time_cover_start, np.size(datevecs_for_dataset, 1)), np.nan)), var[index_variable])
+
+    if time_cover_end < np.size(datevecs_for_dataset, 0) - 1:
+        for index_variable in range(len(variables)):
+            var[index_variable] = np.vstack(
+                (var[index_variable],
+                 np.full((np.size(datevecs_for_dataset, 0) - time_cover_end - 1, np.size(datevecs_for_dataset, 1)),
+                         np.nan)))
 
     return var
 
@@ -161,6 +180,9 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
             asmlist.append(datadir + file)
         elif 'merra2' in file:
             dirlist.append(datadir + file)
+
+    dirlist.sort()
+
     variables = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR', 'ALBEDO', 'TO3', 'TQV', 'PS']
     [AOD_550, tot_aer_ext, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(lats, lons,
                                                                                                     dirlist, variables,

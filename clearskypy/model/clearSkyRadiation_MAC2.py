@@ -14,14 +14,14 @@ class ClearSkyMAC2:
         if np.max(np.abs(lon)) > 180:
             raise Exception('-180<= lontitude <=180, reset your lontitude')
 
-        station_num = np.size(lat, 0)
+        station_num = np.size(lat)
         self.lat = lat.reshape([station_num, ])
         self.lon = lon.reshape([station_num, ])
         self.elev = elev.reshape([station_num, 1])
         self.time = time
         self.datadir = datadir
 
-    def clear_sky_MAC2(self, sza, Angstrom_exponent, pressure, wv, AOD550, albedo, components):
+    def clear_sky_MAC2(self, sza, Angstrom_exponent, pressure, wv, AOD550, albedo, Eext, components):
         """
         clear_sky_model MAC2 1982
 
@@ -166,4 +166,4 @@ class ClearSkyMAC2:
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] = extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
 
-        return self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550, surface_albedo, components)
+        return self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550, surface_albedo, Eext, components)

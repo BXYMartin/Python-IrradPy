@@ -19,7 +19,7 @@ if __name__ == '__main__':
     timedef = [('2010-01-01T08:00:00', '2010-01-02T08:00:00'), 
                ('2010-09-01T08:00:00', '2010-09-02T08:00:00')]  
     # use timeseries_builder to build time series for different station
-    time = clearskypy.model.timeseries_builder(timedef, time_delta)
+    time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')

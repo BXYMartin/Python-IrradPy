@@ -14,7 +14,7 @@ class ClearSkyREST2v5:
         if np.max(np.abs(lon)) > 180:
             raise Exception('-180<= lontitude <=180, reset your lontitude')
 
-        station_num = np.size(lat, 0)
+        station_num = np.size(lat)
         self.lat = lat.reshape([station_num, ])
         self.lon = lon.reshape([station_num, ])
         self.elev = elev.reshape([station_num, 1])
@@ -278,4 +278,5 @@ class ClearSkyREST2v5:
         Eext = data_eext_builder(self.time)
         [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
          nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
+        print(tot_aer_ext.shape)
         return self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
