@@ -276,7 +276,39 @@ class ClearSkyREST2v5:
         zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
         zenith_angle = np.deg2rad(zenith_angle)
         Eext = data_eext_builder(self.time)
-        [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
-         nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
-        print(tot_aer_ext.shape)
-        return self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
+
+        same_flag = 1
+
+        for i in range(np.size(self.time, 1) - 1):
+            if self.time[:, i + 1] != self.time[0]:
+                same_flag = 10
+        if same_flag == 1:
+
+            [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
+             nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
+
+            [ghi, dni, dhi] = self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
+            ghi = ghi.T
+            dni = dni.T
+            dhi = dhi.T
+
+            return [ghi, dni, dhi]
+
+        else:
+            ghi = []
+            dni = []
+            dhi = []
+
+            for index in range(np.size(self.time, 1)):
+
+                [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
+                 nitrogen_dioxide] = extract_for_MERRA2(self.lat[:, index], self.lon[:, index], self.time[:, index], self.elev[:, index], self.datadir)
+
+                [ghi_i, dni_i, dhi_i] = self.clear_sky_REST2V5(zenith_angle[:, index], Eext[:, index], pressure, water_vapour, ozone,
+                                                         nitrogen_dioxide, AOD550, Angstrom_exponent, surface_albedo)
+                ghi.append(ghi_i)
+                dni.append(dni_i)
+                dhi.append(dhi_i)
+
+                return [ghi, dni, dhi]
+
