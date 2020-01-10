@@ -22,7 +22,8 @@ if __name__ == '__main__':
     time = clearskypy.model.timeseries_builder(timedef, time_delta)
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
-    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
+    #dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
+    dataset_dir = os.path.join("E:", "MERRA2", "MERRA2_data", "2010-1-1~2019-10-31 rad-slv-aer-asm [-90,-180]~[90,180]","")
 
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
@@ -34,8 +35,7 @@ if __name__ == '__main__':
     # run the MAC2 model
     [ghics_mac2, dnics_mac2, difcs_mac2] = test_mac.MAC2()
 
-
-
+    # Create a figure showing the data of both clear-sky estimates
     fig = plt.figure(1)
     plt.style.use('ggplot')
 
@@ -68,4 +68,12 @@ if __name__ == '__main__':
 
     plt.show()
 
+
+    # Save the data to file
+    np.savetxt("GHIcs_REST2.txt", [time,ghics_rest2], fmt='%s' + '%f'*len(lat), delimiter=',',)
+    np.savetxt("DNIcs_REST2.txt", [time,dnics_rest2], fmt='%s' + '%f'*len(lat), delimiter=',',)
+    np.savetxt("DIFcs_REST2.txt", [time,difcs_rest2], fmt='%s' + '%f'*len(lat), delimiter=',',)
+    np.savetxt("GHIcs_MAC2.txt", [time,ghics_mac2], fmt='%s' + '%f'*len(lat), delimiter=',',)
+    np.savetxt("DNIcs_MAC2.txt", [time,dnics_mac2], fmt='%s' + '%f'*len(lat), delimiter=',',)
+    np.savetxt("DIFcs_MAC2.txt", [time,difcs_mac2], fmt='%s' + '%f'*len(lat), delimiter=',',)
 
