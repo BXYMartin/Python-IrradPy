@@ -316,5 +316,5 @@ class ClearSkyREST2v5:
                 dni.append(dni_i)
                 dhi.append(dhi_i)
 
-                return [ghi, dni, dhi]
+            return [ghi, dni, dhi]
 

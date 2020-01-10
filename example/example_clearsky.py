@@ -73,6 +73,7 @@ if __name__ == '__main__':
             savedata = [time[i].flatten(), ghics_rest2[i].flatten(), dnics_rest2[i].flatten(),
                         difcs_rest2[i].flatten(), ghics_mac2[i].flatten(), dnics_mac2[i].flatten(),
                         difcs_mac2[i].flatten()]
+            #print(savedata)
             savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) +'].txt'
             np.savetxt(savefname, savedata, fmt=['%s']+['%.4f']*6, delimiter=',',)
          
