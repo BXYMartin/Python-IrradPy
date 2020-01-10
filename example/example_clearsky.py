@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
-  
+   
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
@@ -67,12 +67,12 @@ if __name__ == '__main__':
 
     plt.show()
 
-
+    
     # Save the data to file
-    np.savetxt("GHIcs_REST2.txt", [time,ghics_rest2], fmt='%s' + '%f'*len(lat), delimiter=',',)
-    np.savetxt("DNIcs_REST2.txt", [time,dnics_rest2], fmt='%s' + '%f'*len(lat), delimiter=',',)
-    np.savetxt("DIFcs_REST2.txt", [time,difcs_rest2], fmt='%s' + '%f'*len(lat), delimiter=',',)
-    np.savetxt("GHIcs_MAC2.txt", [time,ghics_mac2], fmt='%s' + '%f'*len(lat), delimiter=',',)
-    np.savetxt("DNIcs_MAC2.txt", [time,dnics_mac2], fmt='%s' + '%f'*len(lat), delimiter=',',)
-    np.savetxt("DIFcs_MAC2.txt", [time,difcs_mac2], fmt='%s' + '%f'*len(lat), delimiter=',',)
-
+    for i in range(time.shape[1]):
+            savedata = [time[:, i], ghics_rest2[:, i], dnics_rest2[:, i],
+                        difcs_rest2[:, i], ghics_mac2[:, i], dnics_mac2[:, i],
+                        difcs_mac2[:, i]]      
+            savefname = 'site[' + str(latitudes[0,i]) + ',' + str(longitudes[0,i]) +'].txt'
+            np.savetxt(savefname, savedata, fmt=['%s']+['%.4f']*6, delimiter=',',)
+         
