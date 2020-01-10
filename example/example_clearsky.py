@@ -17,7 +17,7 @@ if __name__ == '__main__':
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined. 
     timedef = [('2010-01-01T08:00:00', '2010-01-02T08:00:00'), 
-               ('2010-09-01T08:00:00', '2010-09-02T08:00:00')]  
+               ('2010-09-01T08:00:00', '2010-09-02T08:00:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
 
@@ -33,7 +33,6 @@ if __name__ == '__main__':
     test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir)
     # run the MAC2 model
     [ghics_mac2, dnics_mac2, difcs_mac2] = test_mac.MAC2()
-
     # Create a figure showing the data of both clear-sky estimates
     fig = plt.figure(1)
     plt.style.use('ggplot')
@@ -58,6 +57,7 @@ if __name__ == '__main__':
 
     plt.subplot(122)
     plt.title('MAC2')
+
     plt.plot(time[1], ghics_mac2[1], ls='-')
     plt.plot(time[1], dnics_mac2[1], ls='--')
     plt.plot(time[1], difcs_mac2[1], ls='-.')

@@ -278,8 +278,12 @@ class ClearSkyREST2v5:
         same_flag = 1
 
         for i in range(len(self.time) - 1):
-            if (self.time[i + 1] != self.time[0]).any():
+            if self.time[i + 1].shape == self.time[0].shape:
+                if (self.time[i + 1] != self.time[0]).any():
+                    same_flag = 0
+            else:
                 same_flag = 0
+
         if same_flag == 1:
             zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
             zenith_angle = np.deg2rad(zenith_angle)
