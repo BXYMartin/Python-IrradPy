@@ -36,20 +36,31 @@ if __name__ == '__main__':
 
 
 
-    plt.figure(1)
+    fig = plt.figure(1)
+    plt.style.use('ggplot')
 
-    plt.subplot(121)
-    plt.title('REST2v5')
+    ax = plt.subplot(121)
+    # Remove the plot frame lines. They are unnecessary chartjunk.   
+    ax.spines["top"].set_visible(False)    
+    ax.spines["bottom"].set_visible(False)    
+    ax.spines["right"].set_visible(False)    
+    ax.spines["left"].set_visible(False)
     plt.plot(time[:, 0], ghics_rest2[:, 0], ls='-')
     plt.plot(time[:, 0], dnics_rest2[:, 0], ls='--')
     plt.plot(time[:, 0], difcs_rest2[:, 0], ls='-.')
-    plt.xlabel('Time UTC')
-    plt.ylabel('Irradiance')
+    ax.set_xlabel('Time UTC')
+    ax.set_ylabel('Irradiance')
+    ax.set_title('REST2v5', fontsize=12, )
+    ax.title.set_
+    # Limit the range of the plot to only where the data is.    
+    # Avoid unnecessary whitespace.    
+    plt.ylim(0, 700)    
+    #plt.xlim(1968, 2014)    
 
     plt.subplot(122)
     plt.title('MAC2')
     plt.plot(time[:, 1], ghics_mac2[:, 1], ls='-')
-    plt.plot(time[:, 1], dnics_mac2`[:, 1], ls='--')
+    plt.plot(time[:, 1], dnics_mac2[:, 1], ls='--')
     plt.plot(time[:, 1], difcs_mac2[:, 1], ls='-.')
     plt.xlabel('Time UTC')
     plt.ylabel('Irradiance')
