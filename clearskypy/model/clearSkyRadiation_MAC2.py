@@ -47,7 +47,7 @@ class ClearSkyMAC2:
         earth_radius = np.power(Eext / 1366.1, 0.5)
         ang_alpha = Angstrom_exponent
         ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
-        
+
         sza[sza > 90] = np.nan
         datapoints = np.size(sza, 0) * np.size(sza, 1)
         # Extraterrestrial irradiance
@@ -161,33 +161,41 @@ class ClearSkyMAC2:
 
         :return: [Egh, Edn, Edh]
         """
-        zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
-        Eext = data_eext_builder(self.time)
 
         same_flag = 1
 
-        for i in range(np.size(self.time, 1)-1):
-            if self.time[:, i+1] != self.time[0]:
-                same_flag = 10
+        for i in range(len(self.time) - 1):
+            if (self.time[i + 1] != self.time[0]).any():
+                same_flag = 0
         if same_flag == 1:
+
+            zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
+            Eext = data_eext_builder(self.time)
 
             [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
              nitrogen_dioxide] = extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
 
-            [Egh, Edn, Edh] = self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550, surface_albedo, Eext, components)
+            [Egh, Edn, Edh] = self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550,
+                                                  surface_albedo, Eext, components)
             Egh = Egh.T
             Edn = Edn.T
             Edh = Edh.T
             return [Egh, Edn, Egh]
         else:
-            Egh=[]
-            Edn=[]
-            Egh=[]
-            for index in range(np.size(self.time, 1)):
-                [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
-                 nitrogen_dioxide] = extract_for_MERRA2(self.lat[:, index], self.lon[:, index], self.time[:, index], self.elev[:, index], self.datadir)
+            Egh = []
+            Edn = []
+            Egh = []
+            for index in range(len(self.time)):
+                zenith_angle = latlon2solarzenith(self.lat[index], self.lon[index], self.time[index])
+                Eext = data_eext_builder(self.time[index])
 
-                [Egh_i, Edn_i, Edh_i] = self.clear_sky_MAC2(zenith_angle[:, index], Angstrom_exponent, pressure, water_vapour, AOD550, surface_albedo, Eext[:, index], components)
+                [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
+                 nitrogen_dioxide] = extract_for_MERRA2(self.lat[index], self.lon[index], self.time[index],
+                                                        self.elev[index], self.datadir)
+
+                [Egh_i, Edn_i, Edh_i] = self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure,
+                                                            water_vapour, AOD550, surface_albedo, Eext,
+                                                            components)
 
                 Egh.append(Egh_i)
                 Edn.append(Edn_i)

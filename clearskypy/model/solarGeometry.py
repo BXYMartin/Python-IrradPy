@@ -75,20 +75,20 @@ def data_eext_builder(datearray):
 
 
 def timeseries_builder(timeset, delta, num_station):
-    if num_station == len(timeset):
-        timeseries = np.arange(timeset[0][0], timeset[0][1], delta, dtype='datetime64[m]')[:, np.newaxis]
+    if len(timeset) != 1 and num_station == len(timeset):
+        timeseries = [np.arange(timeset[0][0], timeset[0][1], delta, dtype='datetime64[m]')[:, np.newaxis]]
 
         for index in range(len(timeset) - 1):
             new_series = np.arange(timeset[index + 1][0], timeset[index + 1][1], delta, dtype='datetime64[m]')[:,
                          np.newaxis]
 
-            timeseries = np.hstack((timeseries, new_series))
+            timeseries.append(new_series)
 
         return timeseries
 
-    elif len(timeset) == 1 and num_station > len(timeset):
+    elif len(timeset) == 1:
         timeseries = np.arange(timeset[0][0], timeset[0][1], delta, dtype='datetime64[m]')[:, np.newaxis]
 
         timeseries = np.tile(timeseries, num_station)
 
-        return timeseries
+        return timeseries.T

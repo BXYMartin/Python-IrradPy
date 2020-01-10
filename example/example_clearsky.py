@@ -44,13 +44,13 @@ if __name__ == '__main__':
     ax.spines["bottom"].set_visible(False)    
     ax.spines["right"].set_visible(False)    
     ax.spines["left"].set_visible(False)
-    plt.plot(time[:, 0], ghics_rest2[0], ls='-')
-    plt.plot(time[:, 0], dnics_rest2[0], ls='--')
-    plt.plot(time[:, 0], difcs_rest2[0], ls='-.')
+    plt.plot(time[0], ghics_rest2[0], ls='-')
+    plt.plot(time[0], dnics_rest2[0], ls='--')
+    plt.plot(time[0], difcs_rest2[0], ls='-.')
     ax.set_xlabel('Time UTC')
     ax.set_ylabel('Irradiance')
     ax.set_title('REST2v5', fontsize=12, )
-    ax.title.set_
+    #ax.title.set_
     # Limit the range of the plot to only where the data is.    
     # Avoid unnecessary whitespace.    
     plt.ylim(0, 700)    
@@ -58,9 +58,9 @@ if __name__ == '__main__':
 
     plt.subplot(122)
     plt.title('MAC2')
-    plt.plot(time[:, 1], ghics_mac2[1], ls='-')
-    plt.plot(time[:, 1], dnics_mac2[1], ls='--')
-    plt.plot(time[:, 1], difcs_mac2[1], ls='-.')
+    plt.plot(time[1], ghics_mac2[1], ls='-')
+    plt.plot(time[1], dnics_mac2[1], ls='--')
+    plt.plot(time[1], difcs_mac2[1], ls='-.')
     plt.xlabel('Time UTC')
     plt.ylabel('Irradiance')
     plt.legend(['GHIcs', 'DNIcs', 'DIFcs'])
@@ -69,10 +69,10 @@ if __name__ == '__main__':
 
     
     # Save the data to file
-    for i in range(time.shape[1]):
-            savedata = [time[:, i], ghics_rest2[i], dnics_rest2[i],
-                        difcs_rest2[i], ghics_mac2[i], dnics_mac2[i],
-                        difcs_mac2[i]]
+    for i in range(len(time)):
+            savedata = [time[i].flatten(), ghics_rest2[i].flatten(), dnics_rest2[i].flatten(),
+                        difcs_rest2[i].flatten(), ghics_mac2[i].flatten(), dnics_mac2[i].flatten(),
+                        difcs_mac2[i].flatten()]
             savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) +'].txt'
             np.savetxt(savefname, savedata, fmt=['%s']+['%.4f']*6, delimiter=',',)
          

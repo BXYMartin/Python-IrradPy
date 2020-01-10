@@ -52,14 +52,25 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
 
     datetime_for_station = []
 
-    for index_station in range(len(lons)):
-        datetime_temp = datetime[:, index_station]
+    if isinstance(lons, np.ndarray):
+        station_num =len(lons)
+        for index_station in range(len(lons)):
+            datetime_temp = datetime[:, index_station]
+            datetime_temp = datetime_temp[~np.isnat(datetime_temp)]
+            datetime_for_station.append(datetime_temp)
+
+    else:
+        lats = [lats]
+        lons = [lons]
+        station_num = 1
+        datetime_temp = datetime
         datetime_temp = datetime_temp[~np.isnat(datetime_temp)]
         datetime_for_station.append(datetime_temp)
 
     if dataset['time'].size > 1:
         if interpolate:
-            dataset_interpolation = dataset.interp(time=datetime_for_interp)  # use datevecs to interpolate
+            if len(datetime_for_interp):
+                dataset_interpolation = dataset.interp(time=datetime_for_interp)  # use datevecs to interpolate
         else:
             try:
                 dataset_interpolation = dataset.sel(time=datetime_for_interp)
@@ -73,8 +84,8 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
     var = []
     for index_variables in variables:
         if interpolate:
-            station_data = np.empty([len(datetime_for_station[0]), len(lats)], dtype=float)
-            for index_station in range(len(lons)):
+            station_data = np.empty([len(datetime_for_station[0]), station_num], dtype=float)
+            for index_station in range(station_num):
                 if datetime_for_station[index_station].size == 0:
                     station_data[:, index_station] = np.full([1, len(datetime_for_station[0])], np.nan)
                 else:
@@ -83,8 +94,8 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
                         time=datetime_for_station[index_station]).data]).T[:, 0]
 
         else:
-            station_data = np.empty([len(lons_unique), 1], dtype=float)  # for phis
-            for index_station in range(len(lons)):
+            station_data = np.empty([station_num, 1], dtype=float)  # for phis
+            for index_station in range(station_num):
                 station_data[index_station, :] = np.array([dataset_interpolation[index_variables].sel(
                     lat=lats[index_station], lon=lons[index_station], method='nearest').data])[:, 0]
         var.append(station_data)
@@ -131,9 +142,11 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
         datevecs_for_dataset = date_check_vec(datearray, dataset_starttime - halfhour, dataset_endtime + halfhour)
 
         set_cover_start = (~np.isnat(datevecs_for_dataset[:, 0])).argmax(axis=0)
+        if ((~np.isnat(datevecs_for_dataset[:, 0])) == True).any():
+            set_cover_end = np.size(datevecs_for_dataset, 0) - 1 - (~np.isnat(datevecs_for_dataset[:, 0]))[::-1].argmax(axis=0)
+        else:
+            set_cover_end = -1
 
-        set_cover_end = np.size(datevecs_for_dataset, 0) - 1 - (~np.isnat(datevecs_for_dataset[:, 0]))[::-1].argmax(
-            axis=0)
         if index_dataset == 0:
             time_cover_start = set_cover_start
 
@@ -162,6 +175,7 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
                 (var[index_variable],
                  np.full((np.size(datevecs_for_dataset, 0) - time_cover_end - 1, np.size(datevecs_for_dataset, 1)),
                          np.nan)))
+
 
     return var
 
