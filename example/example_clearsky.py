@@ -16,8 +16,8 @@ if __name__ == '__main__':
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined. 
-    timedef = [('2010-01-01T06:15:00', '2010-01-02T04:45:00'), 
-               ('2010-09-01T08:15:00', '2010-09-02T04:45:00')]  
+    timedef = [('2010-01-01T08:00:00', '2010-01-02T08:00:00'), 
+               ('2010-09-01T08:00:00', '2010-09-02T08:00:00')]  
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta)
 
