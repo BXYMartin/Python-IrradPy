@@ -22,9 +22,8 @@ if __name__ == '__main__':
     time = clearskypy.model.timeseries_builder(timedef, time_delta)
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
-    #dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
-    dataset_dir = os.path.join("E:", "MERRA2", "MERRA2_data", "2010-1-1~2019-10-31 rad-slv-aer-asm [-90,-180]~[90,180]","")
-
+    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
+  
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
