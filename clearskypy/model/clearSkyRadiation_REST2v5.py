@@ -285,12 +285,12 @@ class ClearSkyREST2v5:
                 same_flag = 0
 
         if same_flag == 1:
-            zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time)
+            zenith_angle = latlon2solarzenith(self.lat, self.lon, self.time.T)
             zenith_angle = np.deg2rad(zenith_angle)
-            Eext = data_eext_builder(self.time)
+            Eext = data_eext_builder(self.time.T)
 
             [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
-             nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time, self.elev, self.datadir)
+             nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time.T, self.elev, self.datadir)
 
             [ghi, dni, dhi] = self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
             ghi = ghi.T
@@ -305,14 +305,14 @@ class ClearSkyREST2v5:
             dhi = []
 
             for index in range(len(self.time)):
-
-                zenith_angle = latlon2solarzenith(self.lat[index], self.lon[index], self.time[index])
+                time_temp = (self.time[index]).reshape(self.time[index].size, 1)
+                zenith_angle = latlon2solarzenith(self.lat[index], self.lon[index], time_temp)
 
                 zenith_angle = np.deg2rad(zenith_angle)
-                Eext = data_eext_builder(self.time[index])
+                Eext = data_eext_builder(time_temp)
 
                 [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
-                 nitrogen_dioxide] = extract_for_MERRA2(self.lat[index], self.lon[index], self.time[index], self.elev[index], self.datadir)
+                 nitrogen_dioxide] = extract_for_MERRA2(self.lat[index], self.lon[index], time_temp, self.elev[index], self.datadir)
 
                 [ghi_i, dni_i, dhi_i] = self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour, ozone,
                                                          nitrogen_dioxide, AOD550, Angstrom_exponent, surface_albedo)
