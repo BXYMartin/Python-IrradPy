@@ -5,7 +5,7 @@ import os
 
 
 def date_check(date, date_start, date_end):
-    if date_start <= date <= date_end:
+    if date_start <= date < date_end:
         return date
     else:
         return np.datetime64('NaT')
