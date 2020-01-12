@@ -1,9 +1,6 @@
 import xarray as xr
 import numpy as np
-import math
-import scipy
 import datetime
-import sys
 import os
 
 
@@ -156,7 +153,10 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
                                  interpolate)
         if newvar != []:
             var_list.append(newvar)
-    var = var_list[0]
+    if len(var_list):
+        var = var_list[0]
+    else:
+        raise Exception('No data was extracted by the extractor, please check the data set path is correct')
 
     for index_varlist in range(len(var_list) - 1):
         if var_list[index_varlist + 1] == []:
