@@ -16,13 +16,13 @@ if __name__ == '__main__':
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined. 
-    timedef = [('2010-01-01T08:00:00', '2010-01-02T08:00:00'), 
-               ('2010-09-01T08:00:00', '2010-09-02T08:00:00')]
+    timedef = [('2018-01-02T08:00:00', '2018-01-02T16:00:00'),
+               ('2018-01-02T04:00:00', '2018-01-02T17:00:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
-    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '')
+    dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
    
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
@@ -67,13 +67,12 @@ if __name__ == '__main__':
 
     plt.show()
 
-    
+
     # Save the data to file
     for i in range(len(time)):
-            savedata = [time[i].flatten(), ghics_rest2[i].flatten(), dnics_rest2[i].flatten(),
+            savedata = np.array([time[i].flatten(), ghics_rest2[i].flatten(), dnics_rest2[i].flatten(),
                         difcs_rest2[i].flatten(), ghics_mac2[i].flatten(), dnics_mac2[i].flatten(),
-                        difcs_mac2[i].flatten()]
-            #print(savedata)
+                        difcs_mac2[i].flatten()])
             savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) +'].txt'
-            np.savetxt(savefname, savedata, fmt=['%s']+['%.4f']*6, delimiter=',',)
+            np.savetxt(savefname, savedata.T, fmt='%s' + ',%.4f' * 6, delimiter='\n',)
          
