@@ -14,12 +14,12 @@ class dummy_downloader():
         # specify the date range
         self.initial_year = 2018
         self.initial_month = 1
-        self.initial_day = 31
+        self.initial_day = 1
 
         # specify the end date
         self.final_year = 2018
-        self.final_month = 2
-        self.final_day = 2
+        self.final_month = 1
+        self.final_day = 3
 
         # specify the bottom left corner of the rectangular region
         self.lat_1 = -90
