@@ -47,6 +47,13 @@ class ClearSkyMAC2:
         """
         warnings.filterwarnings("ignore")
 
+        ang_alpha = Angstrom_exponent
+        ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
+
+        sza[sza > 90] = np.nan
+        datapoints = np.size(sza, 0) * np.size(sza, 1)
+        # Extraterrestrial irradiance
+
         eext = Eext
         # Air Mass
         amm = 35 / np.power((1224 * np.power(np.cos(np.deg2rad(sza)), 2) + 1), 0.5)
