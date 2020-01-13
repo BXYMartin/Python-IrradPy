@@ -2,7 +2,7 @@ import xarray as xr
 import numpy as np
 import datetime
 import os
-
+import warnings
 
 def date_check(date, date_start, date_end):
     if date_start <= date < date_end:
@@ -194,6 +194,7 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
     """
     Extract data from the MERRA2 database.
     """
+    warnings.filterwarnings("ignore")
     datadirlist = [os.listdir(datadir)][0]
     dirlist = []
     asmlist = []
