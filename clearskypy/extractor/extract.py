@@ -203,7 +203,10 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
                                                                                                     times,
                                                                                                     interpolate=True)
     # Get the MERRA2 cell height
-    [phis] = extract_dataset(lats, lons, asmlist[0], ['PHIS'], times, interpolate=False)
+    if len(asmlist):
+        [phis] = extract_dataset(lats, lons, asmlist[0], ['PHIS'], times, interpolate=False)
+    else:
+        raise Exception('Extractor does not detect the MERRA2_101.const_2d_asm_Nx.00000000.nc4.nc4 dataset')
     # apply conversions from raw MERRA2 units to clear-sky model units
     water_vapour = water_vapour * 0.1
     ozone = ozone * 0.001
