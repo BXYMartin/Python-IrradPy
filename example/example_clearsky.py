@@ -42,8 +42,8 @@ if __name__ == '__main__':
     munits.registry[np.datetime64] = converter
     munits.registry[datetime.date] = converter
     munits.registry[datetime.datetime] = converter
-    lims = [(time[0][0][0], time[0][-1][0]),
-            (time[1][0][0], time[1][-1][0])]
+    lims = [(time[0][0], time[0][-1]),
+            (time[1][0], time[1][-1])]
     fig, axs = plt.subplots(1, 2, figsize=(8, 3), constrained_layout=True)
     #plt.rcParams["figure.figsize"] = (7.4,3)
     plt.rcParams["font.family"] = "Times New Roman"
