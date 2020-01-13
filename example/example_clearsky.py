@@ -16,14 +16,14 @@ if __name__ == '__main__':
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined. 
-    timedef = [('2018-01-01T22:00:00', '2018-01-02T12:00:00'),
-               ('2018-01-02T23:00:00', '2018-01-03T10:00:00')]
+    timedef = [('2018-01-01T20:00:00', '2018-01-02T14:00:00'),
+               ('2018-01-02T20:00:00', '2018-01-03T14:00:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
-     
+    
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
@@ -36,30 +36,33 @@ if __name__ == '__main__':
     
     
     # Create a figure showing the data of both clear-sky estimates
+    plt.rcParams["figure.figsize"] = (7.4,3)
     fig = plt.figure(1)
     plt.style.use('ggplot')
 
-    ax = plt.subplot(121)
-    # Remove the plot frame lines. They are unnecessary chartjunk.   
-    ax.spines["top"].set_visible(False)    
-    ax.spines["bottom"].set_visible(False)    
-    ax.spines["right"].set_visible(False)    
-    ax.spines["left"].set_visible(False)
-    plt.plot(time[0], ghics_rest2[0], ls='-')
-    plt.plot(time[0], dnics_rest2[0], ls='--')
-    plt.plot(time[0], difcs_rest2[0], ls='-.')
-    ax.set_xlabel('Time UTC')
-    ax.set_ylabel('Irradiance')
-    ax.set_title('REST2v5', fontsize=12, )
-  
-    plt.subplot(122)
-    plt.title('MAC2')
-    plt.plot(time[1], ghics_mac2[1], ls='-')
-    plt.plot(time[1], dnics_mac2[1], ls='--')
-    plt.plot(time[1], difcs_mac2[1], ls='-.')
+    plt.subplot(121)
+    plt.plot(time[0], ghics_rest2[0], ls='-', color='blue')
+    plt.plot(time[0], dnics_rest2[0], ls='--', color='blue')
+    plt.plot(time[0], difcs_rest2[0], ls='-.', color='blue')
+    plt.plot(time[0], ghics_mac2[0], ls='-', color='red')
+    plt.plot(time[0], dnics_mac2[0], ls='--', color='red')
+    plt.plot(time[0], difcs_mac2[0], ls='-.', color='red')
+    plt.xticks(rotation=45)
     plt.xlabel('Time UTC')
     plt.ylabel('Irradiance')
-    plt.legend(['GHIcs', 'DNIcs', 'DIFcs'])
+    plt.title('SERIS', fontsize=12, )
+  
+    plt.subplot(122)
+    plt.plot(time[1], ghics_rest2[1], ls='-', color='blue')
+    plt.plot(time[1], dnics_rest2[1], ls='--', color='blue')
+    plt.plot(time[1], difcs_rest2[1], ls='-.', color='blue')
+    plt.plot(time[1], ghics_mac2[1], ls='-', color='red')
+    plt.plot(time[1], dnics_mac2[1], ls='--', color='red')
+    plt.plot(time[1], difcs_mac2[1], ls='-.', color='red')
+    plt.xticks(rotation=45)
+    plt.title('Beihang University', fontsize=12)
+    plt.xlabel('Time UTC')
+    plt.legend(['GHI REST2', 'DNI REST2', 'DIF REST2', 'GHI MAC2', 'DNI MAC2', 'DIF MAC2'])
 
     plt.show()
 
