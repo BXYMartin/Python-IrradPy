@@ -46,15 +46,8 @@ class ClearSkyMAC2:
         matlab version coded by Xixi Sun according to Davies and Mckay 1982 <Estimating solar irradiance and components>
         """
         warnings.filterwarnings("ignore")
-        earth_radius = np.power(Eext / 1366.1, 0.5)
-        ang_alpha = Angstrom_exponent
-        ang_beta = AOD550 / (np.power(0.55, -ang_alpha))
 
-        sza[sza > 90] = np.nan
-        datapoints = np.size(sza, 0) * np.size(sza, 1)
-        # Extraterrestrial irradiance
-        esc = 1353  # author set 1353
-        eext = esc * np.power(earth_radius, -2)
+        eext = Eext
         # Air Mass
         amm = 35 / np.power((1224 * np.power(np.cos(np.deg2rad(sza)), 2) + 1), 0.5)
         amm[amm < 0] = 0
