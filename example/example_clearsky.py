@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
-   
+    
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     fig = plt.figure(1)
     plt.style.use('ggplot')
 
+    # make the first subplot for the location of SERIS
     plt.subplot(121)
     t = time[0].astype('O')
     plt.plot(t, ghics_rest2[0], ls='-', color='blue')
@@ -54,6 +55,7 @@ if __name__ == '__main__':
     plt.ylabel('Irradiance [Wm$^{-2}$]', fontsize=10)
     plt.title('SERIS', fontsize=12, )
   
+    # make the second subplot for the location of Beihang
     plt.subplot(122)
     t = time[1].astype('O')
     plt.plot(t, ghics_rest2[1], ls='-', color='blue')
@@ -65,8 +67,11 @@ if __name__ == '__main__':
     plt.xticks(rotation=45, fontsize=8)
     plt.title('Beihang University', fontsize=12)
     plt.xlabel('Time UTC', fontsize=10)
-    plt.legend(['GHI rest2', 'DNI rest2', 'DIF rest2', 'GHI mac2', 'DNI mac2', 'DIF mac2'], fontsize=8)
+    plt.legend(['GHI REST2', 'DNI REST2', 'DIF REST2', 'GHI MAC2', 'DNI MAC2', 'DIF MAC2'], fontsize=8)
     
+    # save the figure and show to console
+    plt.tight_layout()
+    fig.savefig('example_image.pdf')
     plt.show()
 
     # Save the data to file, each site = new file
