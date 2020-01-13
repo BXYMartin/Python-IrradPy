@@ -2,6 +2,8 @@ import numpy as np
 import clearskypy
 import os
 from matplotlib import pyplot as plt
+import matplotlib.units as munits
+import matplotlib.dates as mdates
 
 if __name__ == '__main__':
     # set some example latitudes, longitudes and elevations
@@ -23,7 +25,7 @@ if __name__ == '__main__':
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
-    
+   
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
@@ -36,6 +38,8 @@ if __name__ == '__main__':
     
     
     # Create a figure showing the data of both clear-sky estimates
+    converter = mdates.ConciseDateConverter()
+    munits.registry[np.datetime64] = converter
     plt.rcParams["figure.figsize"] = (7.4,3)
     plt.rcParams["font.family"] = "Times New Roman"
     fig = plt.figure(1)
