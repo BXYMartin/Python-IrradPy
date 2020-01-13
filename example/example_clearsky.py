@@ -4,6 +4,7 @@ import os
 from matplotlib import pyplot as plt
 import matplotlib.units as munits
 import matplotlib.dates as mdates
+import datetime
 
 if __name__ == '__main__':
     # set some example latitudes, longitudes and elevations
@@ -36,43 +37,57 @@ if __name__ == '__main__':
     # run the MAC2 model
     [ghics_mac2, dnics_mac2, difcs_mac2] = test_mac.MAC2()
     
-    
     # Create a figure showing the data of both clear-sky estimates
     converter = mdates.ConciseDateConverter()
     munits.registry[np.datetime64] = converter
-    plt.rcParams["figure.figsize"] = (7.4,3)
+    munits.registry[datetime.date] = converter
+    munits.registry[datetime.datetime] = converter
+    lims = [(time[0][0][0], time[0][-1][0]),
+            (time[1][0][0], time[1][-1][0])]
+    fig, axs = plt.subplots(1, 2, figsize=(8, 3), constrained_layout=True)
+    #plt.rcParams["figure.figsize"] = (7.4,3)
     plt.rcParams["font.family"] = "Times New Roman"
-    fig = plt.figure(1)
+    #fig = plt.figure(1)
     plt.style.use('ggplot')
 
     # make the first subplot for the location of SERIS
-    plt.subplot(121)
+
     t = time[0].astype('O')
-    plt.plot(t, ghics_rest2[0], ls='-', color='blue')
-    plt.plot(t, dnics_rest2[0], ls='--', color='blue')
-    plt.plot(t, difcs_rest2[0], ls='-.', color='blue')
-    plt.plot(t, ghics_mac2[0], ls='-', color='red')
-    plt.plot(t, dnics_mac2[0], ls='--', color='red')
-    plt.plot(t, difcs_mac2[0], ls='-.', color='red')
-    plt.xticks(rotation=45, fontsize=8)
+    axs[0].plot(t, ghics_rest2[0], ls='-', color='blue')
+    axs[0].plot(t, dnics_rest2[0], ls='--', color='blue')
+    axs[0].plot(t, difcs_rest2[0], ls='-.', color='blue')
+    axs[0].plot(t, ghics_mac2[0], ls='-', color='red')
+    axs[0].plot(t, dnics_mac2[0], ls='--', color='red')
+    axs[0].plot(t, difcs_mac2[0], ls='-.', color='red')
+    axs[0].set_xlim(lims[0])
+    plt.sca(axs[0])
+    plt.xticks(fontsize=8)
+    # plt.rcParams["figure.figsize"] = (7.4,3)
+    plt.rcParams["font.family"] = "Times New Roman"
+    # fig = plt.figure(1)
+    plt.style.use('ggplot')
+    # make the second subplot for the location of Beihang
     plt.xlabel('Time UTC')
     plt.ylabel('Irradiance [Wm$^{-2}$]', fontsize=10)
     plt.title('SERIS', fontsize=12, )
-  
-    # make the second subplot for the location of Beihang
-    plt.subplot(122)
+
     t = time[1].astype('O')
-    plt.plot(t, ghics_rest2[1], ls='-', color='blue')
-    plt.plot(t, dnics_rest2[1], ls='--', color='blue')
-    plt.plot(t, difcs_rest2[1], ls='-.', color='blue')
-    plt.plot(t, ghics_mac2[1], ls='-', color='red')
-    plt.plot(t, dnics_mac2[1], ls='--', color='red')
-    plt.plot(t, difcs_mac2[1], ls='-.', color='red')
-    plt.xticks(rotation=45, fontsize=8)
+    axs[1].plot(t, ghics_rest2[1], ls='-', color='blue')
+    axs[1].plot(t, dnics_rest2[1], ls='--', color='blue')
+    axs[1].plot(t, difcs_rest2[1], ls='-.', color='blue')
+    axs[1].plot(t, ghics_mac2[1], ls='-', color='red')
+    axs[1].plot(t, dnics_mac2[1], ls='--', color='red')
+    axs[1].plot(t, difcs_mac2[1], ls='-.', color='red')
+    axs[1].set_xlim(lims[1])
+    axs[1].legend(['GHI REST2', 'DNI REST2', 'DIF REST2', 'GHI MAC2', 'DNI MAC2', 'DIF MAC2'], fontsize=8)
+    plt.sca(axs[1])
+    plt.xticks(fontsize=8)
+    # plt.rcParams["figure.figsize"] = (7.4,3)
+    plt.rcParams["font.family"] = "Times New Roman"
+    # fig = plt.figure(1)
+    plt.style.use('ggplot')
     plt.title('Beihang University', fontsize=12)
     plt.xlabel('Time UTC', fontsize=10)
-    plt.legend(['GHI REST2', 'DNI REST2', 'DIF REST2', 'GHI MAC2', 'DNI MAC2', 'DIF MAC2'], fontsize=8)
-    
     # save the figure and show to console
     plt.tight_layout()
     fig.savefig('example_image.pdf')
