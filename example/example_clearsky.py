@@ -16,14 +16,14 @@ if __name__ == '__main__':
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined. 
-    timedef = [('2018-01-01T20:00:00', '2018-01-02T14:00:00'),
-               ('2018-01-02T20:00:00', '2018-01-03T14:00:00')]
+    timedef = [('2018-01-01T20:00:00', '2018-01-02T15:00:00'),
+               ('2018-01-02T20:00:00', '2018-01-03T15:00:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
-  
+   
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
@@ -49,9 +49,9 @@ if __name__ == '__main__':
     plt.plot(t, ghics_mac2[0], ls='-', color='red')
     plt.plot(t, dnics_mac2[0], ls='--', color='red')
     plt.plot(t, difcs_mac2[0], ls='-.', color='red')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=45, fontsize=8)
     plt.xlabel('Time UTC')
-    plt.ylabel('Irradiance')
+    plt.ylabel('Irradiance [Wm$^{-2}$]', fontsize=10)
     plt.title('SERIS', fontsize=12, )
   
     plt.subplot(122)
@@ -62,10 +62,10 @@ if __name__ == '__main__':
     plt.plot(t, ghics_mac2[1], ls='-', color='red')
     plt.plot(t, dnics_mac2[1], ls='--', color='red')
     plt.plot(t, difcs_mac2[1], ls='-.', color='red')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=45, fontsize=8)
     plt.title('Beihang University', fontsize=12)
-    plt.xlabel('Time UTC')
-    plt.legend(['GHIr', 'DNIr', 'DIFr', 'GHIm', 'DNIm', 'DIFm'])
+    plt.xlabel('Time UTC', fontsize=10)
+    plt.legend(['GHI rest2', 'DNI rest2', 'DIF rest2', 'GHI mac2', 'DNI mac2', 'DIF mac2'], fontsize=8)
     
     plt.show()
 
@@ -75,5 +75,5 @@ if __name__ == '__main__':
                         difcs_rest2[i].flatten(), ghics_mac2[i].flatten(), dnics_mac2[i].flatten(),
                         difcs_mac2[i].flatten()])
             savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) +'].txt'
-            np.savetxt(savefname, savedata.T, fmt='%s' + ',%.4f' * 6, delimiter='\n',)
+            np.savetxt(savefname, savedata.T, fmt='%s' + ',%.4f' * 6, delimiter='\n', header='Time, GHIcs REST2, DNIcs REST2, DIFcs REST2, GHIcs MAC2, DNIcs MAC2, DIFcs MAC2')
          
