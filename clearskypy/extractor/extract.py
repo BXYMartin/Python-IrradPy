@@ -179,6 +179,13 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
                 (var[index_variable],
                  np.full((np.size(datevecs_for_dataset, 0) - time_cover_end - 1, np.size(datevecs_for_dataset, 1)),
                          np.nan)))
+    if cover_flag == 0:
+        for index_variable in range(len(variables)):
+            var[index_variable] = np.vstack(
+                (var[index_variable],
+                 np.full((np.size(datevecs_for_dataset, 0), np.size(datevecs_for_dataset, 1)),
+                         np.nan)))
+
 
     return var
 
