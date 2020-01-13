@@ -16,8 +16,8 @@ if __name__ == '__main__':
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined. 
-    timedef = [('2018-01-01T22:00:00', '2018-01-02T12:00:00'),
-               ('2018-01-02T23:00:00', '2018-01-03T10:00:00')]
+    timedef = [('2018-01-01T22:00:00', '2019-01-02T12:00:00'),
+               ('2018-01-02T23:00:00', '2019-01-03T10:00:00')]
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
 
@@ -33,6 +33,8 @@ if __name__ == '__main__':
     test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir)
     # run the MAC2 model
     [ghics_mac2, dnics_mac2, difcs_mac2] = test_mac.MAC2()
+    
+    
     # Create a figure showing the data of both clear-sky estimates
     fig = plt.figure(1)
     plt.style.use('ggplot')
@@ -68,7 +70,7 @@ if __name__ == '__main__':
     plt.show()
 
 
-    # Save the data to file
+    # Save the data to file, each site = new file
     for i in range(len(time)):
             savedata = np.array([time[i].flatten(), ghics_rest2[i].flatten(), dnics_rest2[i].flatten(),
                         difcs_rest2[i].flatten(), ghics_mac2[i].flatten(), dnics_mac2[i].flatten(),
