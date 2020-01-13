@@ -127,7 +127,12 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
     '''
     halfhour = datetime.timedelta(minutes=30)
     var_list = []
+    cover_flag = 0
+    time_cover_start = 2147483647
+    time_cover_end = -1
     for index_dataset in range(len(dataset_path_list)):
+        set_cover_start = 2147483647
+        set_cover_end = -1
         dataset = xr.open_dataset(dataset_path_list[index_dataset])
         dataset_time = np.array(dataset['time'], dtype='datetime64[s]').astype(datetime.datetime)
         dataset_starttime = dataset_time[0]
@@ -138,16 +143,15 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
 
         datevecs_for_dataset = date_check_vec(datearray, dataset_starttime - halfhour, dataset_endtime + halfhour)
 
-        set_cover_start = (~np.isnat(datevecs_for_dataset[:, 0])).argmax(axis=0)
         if ((~np.isnat(datevecs_for_dataset[:, 0])) == True).any():
+            cover_flag = 1
+            set_cover_start = (~np.isnat(datevecs_for_dataset[:, 0])).argmax(axis=0)
             set_cover_end = np.size(datevecs_for_dataset, 0) - 1 - (~np.isnat(datevecs_for_dataset[:, 0]))[::-1].argmax(axis=0)
-        else:
-            set_cover_end = -1
 
-        if index_dataset == 0:
+        if time_cover_start > set_cover_start:
             time_cover_start = set_cover_start
 
-        if index_dataset == len(dataset_path_list) - 1:
+        if time_cover_end < set_cover_end:
             time_cover_end = set_cover_end
         newvar = extract_dataset(lats, lons, dataset_path_list[index_dataset], variables, datevecs_for_dataset,
                                  interpolate)
@@ -164,18 +168,18 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
         else:
             for index_variable in range(len(variables)):
                 var[index_variable] = np.vstack((var[index_variable], var_list[index_varlist + 1][index_variable]))
-    if time_cover_start > 0:
+    if time_cover_start > 0 and cover_flag ==1:
         for index_variable in range(len(variables)):
             var[index_variable] = np.vstack(
                 (np.full((time_cover_start, np.size(datevecs_for_dataset, 1)), np.nan)), var[index_variable])
 
-    if time_cover_end < np.size(datevecs_for_dataset, 0) - 1:
+    if time_cover_end < np.size(datevecs_for_dataset, 0) - 1 and cover_flag == 1:
         for index_variable in range(len(variables)):
             var[index_variable] = np.vstack(
                 (var[index_variable],
                  np.full((np.size(datevecs_for_dataset, 0) - time_cover_end - 1, np.size(datevecs_for_dataset, 1)),
                          np.nan)))
-
+    print(time_cover_start, time_cover_end)
 
     return var
 
