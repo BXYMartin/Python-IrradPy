@@ -230,7 +230,7 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
     AOD_550 = AOD_550 * scale_height.T
     water_vapour = water_vapour * scale_height.T
     tot_angst[tot_angst < 0] = 0
-
+    pressure = pressure * 0.01
     # As no NO2 data in MERRA2, set to default value of 0.0002
     nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, np.size(times, 0)).reshape([np.size(times, 0), 1]),
                                lats.size)
