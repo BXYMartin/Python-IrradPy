@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 from ..extractor.extract import extract_dataset_list, extract_dataset, extract_for_MERRA2
 from .solarGeometry import *
 
@@ -44,6 +45,7 @@ class ClearSkyMAC2:
 
         matlab version coded by Xixi Sun according to Davies and Mckay 1982 <Estimating solar irradiance and components>
         """
+        warnings.filterwarnings("ignore")
         earth_radius = np.power(Eext / 1366.1, 0.5)
         ang_alpha = Angstrom_exponent
         ang_beta = AOD550 / (np.power(0.55, -ang_alpha))

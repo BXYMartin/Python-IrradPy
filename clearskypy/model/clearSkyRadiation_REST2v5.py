@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import warnings
 from ..extractor.extract import extract_dataset_list, extract_dataset, extract_for_MERRA2
 from .solarGeometry import *
 
@@ -54,6 +55,7 @@ class ClearSkyREST2v5:
         you can run this model with your arguments manually, but recommend run model by rest2() automatically with
         arguments by default.
         """
+        warnings.filterwarnings("ignore")
         Angstrom_exponent[Angstrom_exponent > 2.5] = 2.5
         Angstrom_exponent[Angstrom_exponent < 0] = 0
         pressure[pressure > 1100] = 1100
