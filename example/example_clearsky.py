@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
-    
+  
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
     # run the REST2v5 clear-sky model
@@ -37,35 +37,37 @@ if __name__ == '__main__':
     
     # Create a figure showing the data of both clear-sky estimates
     plt.rcParams["figure.figsize"] = (7.4,3)
+    plt.rcParams["font.family"] = "Times New Roman"
     fig = plt.figure(1)
     plt.style.use('ggplot')
 
     plt.subplot(121)
-    plt.plot(time[0], ghics_rest2[0], ls='-', color='blue')
-    plt.plot(time[0], dnics_rest2[0], ls='--', color='blue')
-    plt.plot(time[0], difcs_rest2[0], ls='-.', color='blue')
-    plt.plot(time[0], ghics_mac2[0], ls='-', color='red')
-    plt.plot(time[0], dnics_mac2[0], ls='--', color='red')
-    plt.plot(time[0], difcs_mac2[0], ls='-.', color='red')
+    t = time[0].astype('O')
+    plt.plot(t, ghics_rest2[0], ls='-', color='blue')
+    plt.plot(t, dnics_rest2[0], ls='--', color='blue')
+    plt.plot(t, difcs_rest2[0], ls='-.', color='blue')
+    plt.plot(t, ghics_mac2[0], ls='-', color='red')
+    plt.plot(t, dnics_mac2[0], ls='--', color='red')
+    plt.plot(t, difcs_mac2[0], ls='-.', color='red')
     plt.xticks(rotation=45)
     plt.xlabel('Time UTC')
     plt.ylabel('Irradiance')
     plt.title('SERIS', fontsize=12, )
   
     plt.subplot(122)
-    plt.plot(time[1], ghics_rest2[1], ls='-', color='blue')
-    plt.plot(time[1], dnics_rest2[1], ls='--', color='blue')
-    plt.plot(time[1], difcs_rest2[1], ls='-.', color='blue')
-    plt.plot(time[1], ghics_mac2[1], ls='-', color='red')
-    plt.plot(time[1], dnics_mac2[1], ls='--', color='red')
-    plt.plot(time[1], difcs_mac2[1], ls='-.', color='red')
+    t = time[1].astype('O')
+    plt.plot(t, ghics_rest2[1], ls='-', color='blue')
+    plt.plot(t, dnics_rest2[1], ls='--', color='blue')
+    plt.plot(t, difcs_rest2[1], ls='-.', color='blue')
+    plt.plot(t, ghics_mac2[1], ls='-', color='red')
+    plt.plot(t, dnics_mac2[1], ls='--', color='red')
+    plt.plot(t, difcs_mac2[1], ls='-.', color='red')
     plt.xticks(rotation=45)
     plt.title('Beihang University', fontsize=12)
     plt.xlabel('Time UTC')
-    plt.legend(['GHI REST2', 'DNI REST2', 'DIF REST2', 'GHI MAC2', 'DNI MAC2', 'DIF MAC2'])
-
+    plt.legend(['GHIr', 'DNIr', 'DIFr', 'GHIm', 'DNIm', 'DIFm'])
+    
     plt.show()
-
 
     # Save the data to file, each site = new file
     for i in range(len(time)):
