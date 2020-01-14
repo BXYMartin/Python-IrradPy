@@ -32,7 +32,7 @@ class dummy_downloader():
         # specify the number of threads, this is the number of instances that will run at the same time
         # theoretically, this can be as many as you think your machine can handle, though GESDISC may
         # impose a limit
-        self.thread_num = 20
+        self.thread_num = 5
 
         # specify whether or not to delete the temporary data [True/False]
         self.delete_temp_dir = False
