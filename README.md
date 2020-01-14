@@ -129,9 +129,9 @@ clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, datase
     
     latitudes: numpy.ndarray, float, compulsory — Define the latitude(s) of the 
         location(s) of interest, size must match longitudes. 
-    longitudes: numpy.ndarray, float, compulsory — De- fine the longitude(s) of 
+    longitudes: numpy.ndarray, float, compulsory — Define the longitude(s) of 
         the location(s) of interest, size must match latitudes. 
-    elevations: numpy.ndarray, float, compulsory — De- fine the elevation(s) of 
+    elevations: numpy.ndarray, float, compulsory — Define the elevation(s) of 
         the location(s) of interest, size must match lats.
     time: numpy.ndarry of dtype ̄‘datetime64[m]’, compulsory — Define the time 
         series desired.
