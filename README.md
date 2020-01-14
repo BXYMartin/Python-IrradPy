@@ -2,12 +2,15 @@
 [![Build Status](https://travis-ci.org/BXYMartin/Python-ClearSkyPy.svg?branch=master)](https://travis-ci.org/BXYMartin/Python-ClearSkyPy)
 [![Latest Version](https://img.shields.io/github/v/release/bxymartin/python-clearskypy)](https://test.pypi.org/project/ClearSkyPy/)
 
-Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
+Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model, extract variables from the MERRA-2 reanalysis database and model of clear-sky irradiance.
 
 ## Functions
 * Skip already downloaded files.
 * Automatically merge files by year.
 * Allow multi-field selection for each table.
+* Extract variables for a given time period from multiple MERRA-2 reanalysis databases.
+* Automatic zenith angle calculation.
+* Support two models: MAC2 and REST2 models.
 * To Be Continue...
 
 ## Details
@@ -19,6 +22,10 @@ Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
     - You can either download this package from the [Github Release Page](https://github.com/BXYMartin/Python-MERRA2/releases) and [Github Package Page](https://github.com/BXYMartin/Python-MERRA2/packages), or clone this repository and run `python setup.py install`. 
 * Run the script.
 
+* Download data sets by downloader
+* Define latitude, longitude, elevation, time period for a model.
+* Run the model.
+
 ### Usage
 #### Use inside Python Script
 ``` python
@@ -26,6 +33,9 @@ Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model.
 import clearskypy
 # Run Downloader
 clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
+# Run Model
+clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir).REST2v5()
+clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir).MAC2()
 
 
 # Windows Users Only:
@@ -47,11 +57,16 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
     delete_temp_dir=True, verbose=True,
     thread_num=20, connection_num=2
     )
+# Run clear sky model from 2018-01-01 To 2018-01-02
+time_delta = 10  # minute
+timedef = [('2018-01-01T00:00:00', '2018-01-02T0:00:00')]
+time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
+clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir).REST2v5()
 ```
 
 ``` python
     Parameters
-    
+    #downloader:
     collection_names : List[str]
         Variable short names, must be defined in variables.py
         if merra2_var_dict is not provided. If more than one variable,
@@ -100,6 +115,30 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
         Number of Files to be downloaded simutanously.
     connection_num : Optional[int]
         Number of Connections for each file to be downloaded simutanously.
+        
+    #clearskypy.model.timeseries_builder:
+    timedef: list [(start time , end time)], optional — specify the start 
+        time(s) and end time(s) of the location(s) of interest.
+    time_delta: integer, optional — specify the temporal resolution of the 
+        time series in minutes
+    num_station: integer, compulsory - specify the station number of interest.
+        if timedef less than num_station, timeseries_builder will expand it 
+        for every station.
+    
+    #clearskypy.model.clearSkyRadiation_MAC2.py && clearskypy.model.clearSkyRadiation_REST2v5.py:
+    
+    latitudes: numpy.ndarray, float, compulsory — Define the latitude(s) of the 
+        location(s) of interest, size must match longitudes. 
+    longitudes: numpy.ndarray, float, compulsory — De- fine the longitude(s) of 
+        the location(s) of interest, size must match latitudes. 
+    elevations: numpy.ndarray, float, compulsory — De- fine the elevation(s) of 
+        the location(s) of interest, size must match lats.
+    time: numpy.ndarry of dtype ̄‘datetime64[m]’, compulsory — Define the time 
+        series desired.
+    dataset_dir: Union[string, Path], optional — Define the location of the 
+        dataset of downloaded and merged data.
+    
+    
 ```
 
 #### Run Package From Shell
@@ -154,9 +193,16 @@ python setup.py test
 |   `process.py`|  wrapped download class |
 
 #### Extractor Module
-Still working on it...
+|   File Name   |            Purpose             |
+| :-----------: | :----------------------------: |
+| `extract.py` |      main extract logic       |
 
-#### To Be Continue...
+#### Model Module
+|   File Name   |            Purpose             |
+| :-----------: | :----------------------------: |
+| `clearSkyRadiation_MAC2.py.py` |     Clear Sky Model MAC2 Class      |
+| `clearSkyRadiation_REST2v5.py.py` | Clear Sky Model REST2 Class  |
+| `solarGeometry.py.py`   |    Basic function for clear sky model|   
 
 ### Directory
 #### Package
@@ -170,9 +216,14 @@ Still working on it...
 │   │   ├── process.py
 │   │   ├── socket.py
 │   │   └── variables.py
-│   └── extractor
-│       ├── __init__.py
-│       └── extract.py
+│   ├── extractor
+│   │    ├── __init__.py
+│   │    └── extract.py
+│   └── model
+│        ├── __init__.py
+│        ├── clearSkyRadiation_MAC2.py
+│        ├── clearSkyRadiation_REST2v5.py
+│        └── solarGeometry.py
 ├── README.md
 ├── setup.py
 ├── example
