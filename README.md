@@ -47,6 +47,7 @@ if __name__ == "__main__":
     clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
     
 # More Examples
+
 # Download All Data From 2018-01-01 To 2018-01-02
 clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
     initial_year=2018, final_year=2018,
@@ -57,6 +58,7 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
     delete_temp_dir=True, verbose=True,
     thread_num=20, connection_num=2
     )
+
 # Run clear sky model from 2018-01-01 To 2018-01-02
 time_delta = 10  # minute
 timedef = [('2018-01-01T00:00:00', '2018-01-02T0:00:00')]
