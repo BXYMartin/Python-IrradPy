@@ -227,7 +227,8 @@ python setup.py test
 ├── README.md
 ├── setup.py
 ├── example
-│   └── example_downloader.py
+│   ├── example_downloader.py
+│   └── example_clearsky.py
 └── test
     └── test_downloader.py
 ```
