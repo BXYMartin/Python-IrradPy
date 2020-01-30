@@ -210,6 +210,14 @@ class SocketManager:
             yield "{:0>4d}-{:0>2d}".format(y, m+1)
 
 
+    def iter_years(self, first: datetime.date, last: datetime.date):
+        for y in range( first.year, last.year + 1 ):
+            for sub in self.iter_months(datetime.date(y, 1, 1), datetime.date(y, 12, 31)):
+                if sub not in self.iter_months(first, last):
+                    logging.error("Missing File From Date {} To Merge Year {}!".format(sub, "{:0>4d}".format(y)))
+            yield "{:0>4d}".format(y)
+
+
 
     # run the function
     def subdaily_universal_download(
@@ -356,10 +364,13 @@ class SocketManager:
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
 
+        log_file = os.path.join(path_data.parent, 'index.npy')
+        if os.path.exists(log_file):
+            log = np.load(log_file).tolist()
+        else:
+            log = []
         delete_set = []
         time_start = time.time()
-    
-
         search_str = "*{0}.nc4.nc".format(str(date).replace('-', ''))
         nc_files = [str(f) for f in path_data.rglob(search_str)]
         nc_files.sort()
@@ -379,7 +390,17 @@ class SocketManager:
                 collections.append(var)
             remote_ds = xr.open_dataset(name)
             # subset to desired variables and merge
-            final_ds = xr.merge([final_ds, remote_ds])
+            try:
+                final_ds = xr.merge([final_ds, remote_ds])
+            except ValueError:
+                logging.error("Corrupted File {0} Detected, Aborting and Redownloading...".format(os.path.split(name)[1]))
+                for line in reversed(log):
+                    if line.startswith(os.path.split(name)[1]):
+                        log.remove(line)
+                        logging.info("Removed Logs For {0}".format(line))
+                np.save(log_file, np.array(log))
+                raise RuntimeError
+
             remote_ds.close()
 
         if len(collections) != len(collection_names):
@@ -415,11 +436,8 @@ class SocketManager:
     ):
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
-
         time_start = time.time()
-
         delete_set = []
-    
         search_str = "*{0}-*.nc".format(date)
         nc_files = [str(f) for f in path_data.rglob(search_str)]
         nc_files.sort()
@@ -461,259 +479,59 @@ class SocketManager:
         logging.info("* File From Date {} Finished Monthly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
         return delete_set
 
-
-    def daily_netcdf(
+    def merge_variables_peryear(
         self,
         path_data: Union[str, Path],
-        output_file: Union[str, Path],
-        collection_name: str,
-        initial_year: int,
+        collection_names: List[str],
         final_year: int,
-        merra2_var_dict: Optional[dict] = None,
+        final_month: int,
+        final_day: int,
+        date: str,
     ):
-        """MERRA2 daily NetCDF.
-
-        Parameters
-        ----------
-        path_data : Union[str, Path]
-        output_file : Union[str, Path]
-        collection_name : str
-        initial_year : int
-        final_year : int
-        merra2_var_dict : Optional[dict]
-            Dictionary containing the following keys:
-            esdt_dir, collection, var_name, standard_name,
-            see the Bosilovich paper for details.
-
-        """
         if not isinstance(path_data, Path):
             path_data = Path(path_data)
-
-        log_file = os.path.join(path_data, 'index.npy')
-        if os.path.exists(log_file):
-            log = np.load(log_file).tolist()
-        else:
-            log = []
-
-        if not merra2_var_dict:
-            merra2_var_dict = var_list[collection_name]
-
-        logging.info("---- Begin Merging Yearly ----")
-        if merra2_var_dict["collection"].startswith("const"):
-            search_str = "*{0}*.nc4".format(merra2_var_dict["collection"])
-            nc_files = [str(f) for f in path_data.rglob(search_str)]
-            for f in nc_files:
-                shutil.copy(f, path_data.parent)
-            return
-
-        logging.info("* Searching For Files To Merge...")
-        search_str = "*{0}*.nc4*".format(merra2_var_dict["collection"])
+        time_start = time.time()
+        delete_set = []
+        search_str = "*{0}-*.nc".format(date)
         nc_files = [str(f) for f in path_data.rglob(search_str)]
-        nc_files = list(filter(lambda a: a not in log, nc_files))
-        for name in nc_files:
-            log.append(name)
-        # Merging with original file
-        if os.path.exists(output_file) and len(os.listdir(path_data)) != 0:
-            shutil.copy(output_file, path_data)
-            filepath, filename = os.path.split(output_file)
-            merging_file = os.path.join(path_data, filename)
-            nc_files.append(merging_file)
-        else:
-            merging_file = None
         nc_files.sort()
-        logging.info("- Find Files [{0}] To Merge...".format(','.join([os.path.split(name)[1] for name in nc_files])))
+        if len(nc_files) == 0:
+            logging.info("* Skipping Data In {0}".format(date))
+            return delete_set
 
-        logging.info("* Processing Headers...")
-        relevant_files = []
-        divided_files = []
-        nt_division = [0]
-        nt = 0
-        nmb = 0
-        for nc_file in nc_files:
-            try:
-                yyyy = int(nc_file.split(".")[-2][0:4])
-            except ValueError:
-                try:
-                    yyyy = int(nc_file.split(".")[-2][-4:])
-                except ValueError:
-                    yyyy = int(nc_file.split(".")[-3][0:4])
-            if (yyyy >= initial_year) and (yyyy <= final_year):
-                relevant_files.append(nc_file)
-                nc = netCDF4.Dataset(nc_file, "r")
-                divided_files.append(nc_file)
-                nt += len(nc.dimensions["time"])
-                nc.close()
+        logging.info("* Processing Data In {0}".format(date))
 
-        if len(relevant_files) == 0:
-            logging.info(str(merra2_var_dict["var_name"]) + " data files have been downloaded and merged for " + collection_name + ".")
-            return
-        nc_reference = netCDF4.Dataset(relevant_files[0], "r")
+        final_ds = xr.open_dataset(nc_files[0])
 
-        if isinstance(merra2_var_dict["var_name"], list):
-            var_ref = {}
-            for name in merra2_var_dict["var_name"]:
-                var_ref[name] = nc_reference.variables[name]
-        else:
-            var_ref = nc_reference.variables[merra2_var_dict["var_name"]]
-        nc_file = output_file
-        now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        nc1 = netCDF4.Dataset(nc_file, "w", format="NETCDF4_CLASSIC")
-        nc1.Conventions = "CF-1.7"
-        nc1.title = (
-            "Modern-Era Retrospective analysis for Research and " "Applications, Version 2"
-        )
-        if (len(divided_files) == 1) and (len(divided_files[0]) == 1):
-            try:
-                nc1.history = (
-                    "{0}\n{1}: " "Reformat to CF-1.7 & " "Extract variable."
-                ).format(nc_reference.History, now)
-            except AttributeError:
-                nc1.history = (
-                    "{0}: " "Reformat to CF-1.7 & " "Extract variable."
-                ).format(now)
+        collections = os.path.split(nc_files[0])[1].split('_')[0]
+        # a connection/file for each repository
+        for name in nc_files[1:]:
+            logging.info("% Merging Data For {0}".format(os.path.split(name)[1]))
+            var = os.path.split(name)[1].split('_')[0]
+            if collections is None or len(collections) > len(var):
+                collections = var
+            remote_ds = xr.open_dataset(name)
+            # subset to desired variables and merge
+            final_ds = xr.concat([final_ds, remote_ds], dim="time")
+            remote_ds.close()
 
-        else:
-            try:
-                nc1.history = (
-                    "{0}\n{1}: "
-                    "Reformat to CF-1.7 & "
-                    "Extract variable & "
-                    "Merge in time."
-                ).format(nc_reference.History, now)
-            except AttributeError:
-                nc1.history = (
-                    "{0}: "
-                    "Reformat to CF-1.7 & "
-                    "Extract variable & "
-                    "Merge in time."
-                ).format(now)
-        try:
-            nc1.institution = nc_reference.Institution
-            nc1.references = nc_reference.References
-        except AttributeError:
-            pass
-        nc1.source = "Reanalysis"
+        # save final dataset to netCDF
+        file_name_str = "{0}_merra2_reanalysis_{1}.nc".format(collections, date)
+        filename = os.path.join(path_data, file_name_str)
 
-        attr_overwrite = ["conventions", "title", "institution", "source", "references"]
-        ordered_attr = {}
-        for attr in nc_reference.ncattrs():
-            if attr == "History":
-                continue
-            if attr.lower() in attr_overwrite:
-                ordered_attr["original_file_" + attr] = getattr(nc_reference, attr)
-            else:
-                ordered_attr[attr] = getattr(nc_reference, attr)
-        for attr in sorted(ordered_attr.keys(), key=lambda v: v.lower()):
-            setattr(nc1, attr, ordered_attr[attr])
+        encoding = {v: {'zlib': True, 'complevel': 4} for v in final_ds.data_vars}
+        logging.info("- Saving Data For {0}".format(date))
+        final_ds.to_netcdf(filename, encoding=encoding)
+        final_ds.close()
+        logging.info("# Logging Redundant Files...")
+        for name in nc_files:
+            delete_set.append(name)
 
-        # Create netCDF dimensions
-        nc1.createDimension("time", nt)
-        # nc1.createDimension('ts', 6)
-        # nc1.createDimension('level', k)
-        nc1.createDimension("lat", len(nc_reference.dimensions["lat"]))
-        nc1.createDimension("lon", len(nc_reference.dimensions["lon"]))
+        logging.info("- Finished Logging Redundant Files...")
 
-        time = nc1.createVariable("time", "i4", ("time",), zlib=True)
-        time.axis = "T"
-        time.units = "hours since 1980-01-01 00:00:00"
-        time.long_name = "time"
-        time.standard_name = "time"
-        time.calendar = "gregorian"
-
-        # level = nc1.createVariable('level','f4',('level',),zlib=True)
-        # level.axis = 'Z'
-        # level.units = 'Pa'
-        # level.positive = 'up'
-        # level.long_name = 'air_pressure'
-        # level.standard_name = 'air_pressure'
-
-        lat = nc1.createVariable("lat", "f4", ("lat",), zlib=True)
-        lat.axis = "Y"
-        lat.units = "degrees_north"
-        lat.long_name = "latitude"
-        lat.standard_name = "latitude"
-        lat[:] = nc_reference.variables["lat"][:]
-
-        lon = nc1.createVariable("lon", "f4", ("lon",), zlib=True)
-        lon.axis = "X"
-        lon.units = "degrees_east"
-        lon.long_name = "longitude"
-        lon.standard_name = "longitude"
-        lon[:] = nc_reference.variables["lon"][:]
-
-        least_digit = merra2_var_dict.get("least_significant_digit", None)
-
-        if isinstance(merra2_var_dict["var_name"], list):
-            var1 = {}
-            for name in merra2_var_dict["var_name"]:
-                var1[name] = nc1.createVariable(
-                    name,
-                    "f4",
-                    ("time", "lat", "lon"),
-                    zlib=True,
-                    fill_value=self.deff4,
-                    least_significant_digit=least_digit,
-                )
-                var1[name].units = var_ref[name].units
-                var1[name].long_name = var_ref[name].long_name
-                var1[name].standard_name = merra2_var_dict["standard_name"]
-        else:
-            var1 = nc1.createVariable(
-                merra2_var_dict["var_name"],
-                "f4",
-                ("time", "lat", "lon"),
-                zlib=True,
-                fill_value=self.deff4,
-                least_significant_digit=least_digit,
-            )
-            var1.units = var_ref.units
-            var1.long_name = var_ref.long_name
-            var1.standard_name = merra2_var_dict["standard_name"]
-
-        nc_reference.close()
-
-        logging.info("- Finished Creating Headers...")
-        if isinstance(merra2_var_dict["var_name"], list):
-            t = {}
-            for name in merra2_var_dict["var_name"]:
-                t[name] = 0
-        else:
-            t = 0
-        for i, nc_file in enumerate(divided_files):
-            logging.debug(nc_file)
-
-            logging.info("% Merging Data {0}/{1}".format(i+1, len(divided_files)))
-            nc = netCDF4.Dataset(nc_file, "r")
-            if isinstance(merra2_var_dict["var_name"], list):
-                ncvar = {}
-                for name in merra2_var_dict["var_name"]:
-                    ncvar[name] = nc.variables[name]
-            else:
-                ncvar = nc.variables[merra2_var_dict["var_name"]]
-            nctime = nc.variables["time"]
-            ncdatetime = netCDF4.num2date(nctime[:], nctime.units)
-            nctime_1980 = np.round(netCDF4.date2num(ncdatetime, time.units))
-            if isinstance(merra2_var_dict["var_name"], list):
-                for name in merra2_var_dict["var_name"]:
-                    var1[name][t[name] : t[name] + ncvar[name].shape[0], :, :] = ncvar[name][:, :, :]
-                    time[t[name] : t[name] + ncvar[name].shape[0]] = nctime_1980[:]
-                    t[name] += ncvar[name].shape[0]
-            else:
-                var1[t : t + ncvar.shape[0], :, :] = ncvar[:, :, :]
-                time[t : t + ncvar.shape[0]] = nctime_1980[:]
-                t += ncvar.shape[0]
-            nc.close()
-
-        logging.info("% Saving Data")
-        nc1.close()
-
-        np.save(log_file, np.array(log))
-
-        logging.info("- Removing Old Merged Files...")
-        if merging_file is not None and os.path.exists(merging_file):
-            os.remove(merging_file)
-        logging.info("---- Finish Merging Yearly ----")
-
+        remaining_month = (int(final_year) - int(date.split('-')[0])) * 12 + int(final_month) - int(date.split('-')[1])
+        logging.info("* File From Date {} Finished Yearly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
+        return delete_set
 
     def daily_download_and_convert(
         self,
@@ -731,7 +549,6 @@ class SocketManager:
         merra2_var_dicts: Optional[List[dict]] = None,
         output_dir: Union[str, Path] = None,
         auth: dict = None,
-        delete_temp_dir: bool = True,
         merge_timelapse: str = 'monthly',
         merge: bool = True,
         thread_num: Optional[int] = 5,
@@ -782,7 +599,6 @@ class SocketManager:
         auth : dict
             Dictionary contains login information.
             {"uid": "USERNAME", "password": "PASSWORD"}
-        delete_temp_dir : bool
         merge_timelapse : str
             Define the timelapse of the merge
             Select from ['none', 'daily', 'monthly', 'yearly']
@@ -873,48 +689,24 @@ class SocketManager:
                     thread_num=thread_num,
                     merge=merge_timelapse,
                 )
-                if merge_timelapse == 'yearly':
-                    # Name the output file
-                    if initial_year == final_year:
-                        file_name_str = "{0}_{1}_merra2_reanalysis_{2}.nc"
-                        out_file_name = file_name_str.format(collection_name, merra2_var_dict["esdt_dir"], str(initial_year))
-                    else:
-                        file_name_str = "{0}_{1}_merra2_reanalysis_{2}-{3}.nc"
-                        out_file_name = file_name_str.format(
-                            collection_name, merra2_var_dict["esdt_dir"], str(initial_year), str(final_year)
-                        )
-                    out_file = Path(output_dir).joinpath(out_file_name)
-                    # Extract variable
-                    self.daily_netcdf(
-                        temp_dir_download,
-                        out_file,
-                        collection_name,
-                        initial_year,
-                        final_year,
-                        merra2_var_dict
-                    )
-            if delete_temp_dir and merge_timelapse == 'yearly':
-                shutil.rmtree(temp_dir_download)
-            else:
-                if delete_temp_dir:
-                    logging.info("Delete Temp Directory Only Works for Yearly Merge!")
-                merge_collection_names = []
-                for i, collection_name in enumerate(collection_names):
-                    if not merra2_var_dicts:
-                        merra2_var_dict = var_list[collection_name]
-                    else:
-                        merra2_var_dict = merra2_var_dicts[i]
-                    if not merra2_var_dict["collection"].startswith("const"):
-                        merge_collection_names.append(collection_name)
+            merge_collection_names = []
+            for i, collection_name in enumerate(collection_names):
+                if not merra2_var_dicts:
+                    merra2_var_dict = var_list[collection_name]
+                else:
+                    merra2_var_dict = merra2_var_dicts[i]
+                if not merra2_var_dict["collection"].startswith("const"):
+                    merge_collection_names.append(collection_name)
 
-                if merge_timelapse == 'daily' or merge_timelapse == 'monthly':
+            try:
+                if merge_timelapse == 'daily' or merge_timelapse == 'monthly' or merge_timelapse == 'yearly':
                     logging.info("---- Begin Merging In Daily Variables ----")
                     for date in self.iter_days(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
                         delete_set = self.merge_variables_perday(
                             temp_dir_download,
                             merge_collection_names,
                             final_year,
-                            final_month, 
+                            final_month,
                             final_day,
                             date,
                         )
@@ -929,17 +721,17 @@ class SocketManager:
                                     time.sleep(20)
                         logging.info("# Finished Deleting Daily Redundant Files...")
                     logging.info("---- Finish Merging In Daily Variables ----")
-                    
-                    
-                if merge_timelapse == 'monthly':
+
+
+                if merge_timelapse == 'monthly' or merge_timelapse == 'yearly':
                     logging.info("---- Begin Merging In Monthly Variables ----")
-        
+
                     for date in self.iter_months(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
                         delete_set = self.merge_variables_permonth(
                             temp_dir_download,
                             merge_collection_names,
                             final_year,
-                            final_month, 
+                            final_month,
                             final_day,
                             date,
                         )
@@ -954,5 +746,33 @@ class SocketManager:
                                     time.sleep(20)
                         logging.info("# Finished Deleting Merged Daily Redundant Files...")
                     logging.info("---- Finish Merging In Monthly Variables ----")
+
+
+                if merge_timelapse == 'yearly':
+                    logging.info("---- Begin Merging In Yearly Variables ----")
+
+                    for date in self.iter_years(datetime.date(initial_year, initial_month, initial_day), datetime.date(final_year, final_month, final_day)):
+                        delete_set = self.merge_variables_peryear(
+                            temp_dir_download,
+                            merge_collection_names,
+                            final_year,
+                            final_month,
+                            final_day,
+                            date,
+                        )
+                        logging.info("# Deleting Merged Monthly Redundant Files...")
+                        for name in delete_set:
+                            while True:
+                                try:
+                                    os.remove(name)
+                                    break
+                                except OSError as err:
+                                    logging.error("OSError: {0} {1}, Retrying...".format(os.path.split(name)[1], err))
+                                    time.sleep(20)
+                        logging.info("# Finished Deleting Merged Monthly Redundant Files...")
+                    logging.info("---- Finish Merging In Yearly Variables ----")
+            except RuntimeError:
+                self.global_retry = True
+
             if self.global_retry:
                 logging.error("Requested Data Partially Downloaded, Retry Downloading...(CTRL+C TO ABORT)")

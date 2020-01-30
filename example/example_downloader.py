@@ -34,9 +34,6 @@ class dummy_downloader():
         # impose a limit
         self.thread_num = 5
 
-        # specify whether or not to delete the temporary data [True/False]
-        self.delete_temp_dir = False
-
         # specify the output destination of the data, depending on operating system changes the file separator
         # default location is where you run the script, specify here if you want to change it using os.join.
         self.output_dir = os.path.join(os.getcwd(),"MERRA2_data")
@@ -83,7 +80,6 @@ class dummy_downloader():
             lat_2=self.lat_2,
             lon_1=self.lon_1,
             lon_2=self.lon_2,
-            delete_temp_dir=self.delete_temp_dir,
             thread_num=self.thread_num,
             merra2_var_dicts=self.merra2_var_dicts,
             output_dir=self.output_dir

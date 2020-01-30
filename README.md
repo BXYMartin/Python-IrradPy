@@ -55,7 +55,7 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
     initial_day=1, final_day=2,
     lat_1=-90, lat_2=90,
     lon_1=-180, lon_2=180,
-    delete_temp_dir=True, verbose=True,
+    verbose=True,
     thread_num=20, connection_num=2
     )
 
@@ -111,7 +111,6 @@ clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, datase
     auth : dict
         Dictionary contains login information.
         {"uid": "USERNAME", "password": "PASSWORD"}
-    delete_temp_dir : bool
     verbose : bool
     thread_num : Optional[int]
         Number of Files to be downloaded simutanously.
@@ -147,7 +146,7 @@ clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, datase
 ``` bash
 python -m clearskypy.downloader.socket --uid USERNAME --password PASSWORD
 
-usage: socket.py [-h] [--collection_names VAR_NAMES] [--delete_temp DELETE_TEMP]
+usage: socket.py [-h] [--collection_names VAR_NAMES]
                  [--download_dir DOWNLOAD_DIR] [--initial_year INITIAL_YEAR]
                  [--initial_month INITIAL_MONTH] [--initial_day INITIAL_DAY]
                  [--final_year FINAL_YEAR] [--final_month FINAL_MONTH]
@@ -165,7 +164,6 @@ merra2_downloader --uid USERNAME --password PASSWORD
 
 usage: merra2_downloader [-h] --uid UID --password PASSWORD
                          [--collection_names COLLECTION_NAMES]
-                         [--delete_temp DELETE_TEMP]
                          [--download_dir DOWNLOAD_DIR]
                          [--initial_year INITIAL_YEAR]
                          [--initial_month INITIAL_MONTH]

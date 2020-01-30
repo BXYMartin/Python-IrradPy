@@ -17,7 +17,6 @@ def parse_args():
     parser.add_argument('--uid', type=str, required=True, help='Username for GESDISC authentication.')
     parser.add_argument('--password', type=str, required=True, help='Password for GESDISC authentication.')
     parser.add_argument('--collection_names', type=list, default=['rad', 'slv', 'aer', 'asm'], help='Select from ["rad", "slv", "aer", "asm"], predefined in downloader.variables.var_list')
-    parser.add_argument('--delete_temp', type=bool, default=False, help='Select from [True, False], option to delete or save original downloaded files.')
     parser.add_argument('--merge_timelapse', type=str, default='monthly', help='Select from [none, daily, monthly, yearly], option to merge original downloaded files into yearly files.')
     parser.add_argument('--download_dir', type=str, default=os.path.join(os.getcwd(), "MERRA2_data"), help='Set the download path for all files, default value is ' + os.path.join(os.getcwd(), "MERRA2_data") + '.')
 
@@ -55,7 +54,6 @@ def run(
     merra2_var_dicts: Optional[List[dict]] = None,
     output_dir: Optional[Union[str, Path]] = os.path.join(os.getcwd(), "MERRA2_data"),
     auth: dict = None,
-    delete_temp_dir: bool = False,
     merge_timelapse: str = 'monthly',
     thread_num: Optional[int] = 5,
     ):
@@ -105,7 +103,6 @@ def run(
     auth : dict
         Dictionary contains login information.
         {"uid": "USERNAME", "password": "PASSWORD"}
-    delete_temp_dir : bool
     merge_timelapse : str
     thread_num : Optional[int]
         Number of Files to be downloaded simutanously.
@@ -128,7 +125,6 @@ def run(
         final_year=final_year, final_month=final_month, final_day=final_day,
         output_dir=output_dir,
         auth=auth,
-        delete_temp_dir=delete_temp_dir,
         merge_timelapse=merge_timelapse,
         lat_1=lat_1, lon_1=lon_1,
         lat_2=lat_2, lon_2=lon_2,
@@ -152,7 +148,6 @@ def main():
         final_year=args.final_year, final_month=args.final_month, final_day=args.final_day,
         output_dir=args.download_dir,
         auth={'uid': args.uid, 'password': args.password},
-        delete_temp_dir=args.delete_temp,
         merge_timelapse=args.merge_timelapse,
         lat_1=args.bottom_left_lat, lon_1=args.bottom_left_lon,
         lat_2=args.top_right_lat, lon_2=args.top_right_lon,
