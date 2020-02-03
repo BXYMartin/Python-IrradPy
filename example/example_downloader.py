@@ -38,6 +38,10 @@ class dummy_downloader():
         # default location is where you run the script, specify here if you want to change it using os.join.
         self.output_dir = os.path.join(os.getcwd(),"MERRA2_data")
 
+        # specify the merge timelapse of the data
+        # select from 'none', 'daily', 'monthly', 'yearly'
+        self.merge_timelapse = 'monthly'
+
         # Here you can change what actually gets downloaded
         # full list of variables can be founnd here https://gmao.gsfc.nasa.gov/pubs/docs/Bosilovich785.pdf
         self.merra2_var_dicts = {
@@ -82,7 +86,8 @@ class dummy_downloader():
             lon_2=self.lon_2,
             thread_num=self.thread_num,
             merra2_var_dicts=self.merra2_var_dicts,
-            output_dir=self.output_dir
+            output_dir=self.output_dir,
+            merge_timelapse=self.merge_timelapse
         )
 
 

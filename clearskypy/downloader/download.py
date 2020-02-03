@@ -153,7 +153,7 @@ class SocketManager:
         retry = True
         limit = 0
         passwd = False
-        while retry and limit < 5:
+        while retry and limit < 1:
             limit = limit + 1
             log = "{url} # {limit} Time Retry #".format(url=url, limit=limit)
             try:
@@ -529,8 +529,8 @@ class SocketManager:
 
         logging.info("- Finished Logging Redundant Files...")
 
-        remaining_month = (int(final_year) - int(date.split('-')[0])) * 12 + int(final_month) - int(date.split('-')[1])
-        logging.info("* File From Date {} Finished Yearly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_month, remaining_month * (time.time() - time_start)/60))
+        remaining_year = int(final_year) - int(date)
+        logging.info("* File From Date {} Finished Yearly Merge in {:.2f} seconds, {} Left, Estimated {:.2f} Minutes Remaining...".format(date, time.time() - time_start, remaining_year, remaining_year * (time.time() - time_start)/60))
         return delete_set
 
     def daily_download_and_convert(
