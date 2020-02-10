@@ -22,8 +22,7 @@ if __name__ == '__main__':
 
     # set the time series that you wish to model. Thi can be unique per locaton.
     # first, specify the temporal resolution in minutes
-    time_delta = 10  # minute
-    # timedef is a list of [(start time , end time)] for each location defined.
+    # timedef is a list of pandas time series definition for each location defined.
 
     timedef = [pd.date_range(start='2018-01-01T20:00:00', end='2018-01-02T15:00:00', freq='10T'),
                pd.date_range(start='2018-01-02T20:00:00', end='2018-01-03T15:00:00', freq='10T')]
@@ -35,14 +34,12 @@ if __name__ == '__main__':
 
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
-    # run the REST2v5 clear-sky model
-
+    # run the REST2v5 clear-sky model  output is a list of pandas.Dataframe for each station. col: GHI, DNI, DHI, row: time
     rest2_output = test_rest2.REST2v5()
 
     # create the MAC2 model class object
     test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
-    # run the MAC2 model
-
+    # run the MAC2 model  output is a list of pandas.Dataframe for each station  col: GHI, DNI, DHI, row: time
     mac2_output = test_mac.MAC2()
 
     # Create a figure showing the data of both clear-sky estimates
