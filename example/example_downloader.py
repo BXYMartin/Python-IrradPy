@@ -1,6 +1,7 @@
 from multiprocessing import freeze_support
 import clearskypy
 import os
+from getpass import getpass
 
 class dummy_downloader():
     def setUp(self):
@@ -9,7 +10,7 @@ class dummy_downloader():
 
         # specify your user authentication
         self.username = input("Please Enter Your USERNAME: ")
-        self.password = input("Please Enter Your PASSWORD: ")
+        self.password = getpass("Please Enter Your PASSWORD: ")
 
         # specify the date range
         self.initial_year = 2018

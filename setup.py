@@ -37,6 +37,7 @@ class DiscoverTest(test):
 
 if __name__ == "__main__":
     freeze_support()
+    assert sys.version_info >= (3, 6), "Minimum Python >= 3.6 is required!"
     setup(
         name = "ClearSkyPy",
         version = "1.4.0",
@@ -53,18 +54,18 @@ if __name__ == "__main__":
         include_package_data = True,
         platforms = "any",
         install_requires = [
-            "pydap",
-            "xarray",
-            "config",
-            "scipy",
-            "utils",
-            "netCDF4",
-            "numpy",
-            "pathlib",
-            "typing",
-            "requests",
-            "argparse",
-            "cython",
+            "pydap >= 3.0",
+            "xarray >= 0.10.0",
+            "config >= 0.4.0",
+            "scipy >= 1.0.0",
+            "utils >= 1.0.0",
+            "netCDF4 >= 1.5.0",
+            "numpy >= 1.10.0",
+            "pathlib >= 1.0",
+            "typing >= 3.5.0",
+            "requests >= 2.0.0",
+            "argparse >= 1.0",
+            "cython >= 0.29.0",
             ],
 
         scripts = [],
