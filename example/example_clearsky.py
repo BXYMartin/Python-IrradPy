@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import matplotlib.units as munits
 import matplotlib.dates as mdates
 import datetime
+import pandas as pd
 
 if __name__ == '__main__':
     # check the version for matplotlib for ConciseDateConverter
@@ -23,10 +24,11 @@ if __name__ == '__main__':
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
     # timedef is a list of [(start time , end time)] for each location defined.
-    timedef = [('2018-01-01T20:00:00', '2018-01-02T15:00:00'),
-               ('2018-01-02T20:00:00', '2018-01-03T15:00:00')]
+
+    timedef = [pd.date_range(start='2018-01-01T20:00:00', end='2018-01-02T15:00:00', freq='10T'),
+               pd.date_range(start='2018-01-02T20:00:00', end='2018-01-03T15:00:00', freq='10T')]
     # use timeseries_builder to build time series for different station
-    time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
+    time = clearskypy.model.timeseries_builder(timedef, np.size(latitudes))
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')

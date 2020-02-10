@@ -74,26 +74,39 @@ def data_eext_builder(datearray):
     return Eext
 
 
-def timeseries_builder(timeset, delta, num_station):
+def timeseries_builder(timeset,num_station):
     if len(timeset) != 1 and num_station == len(timeset):
 
-        unique_timeset = list(set(timeset))
-        if len(unique_timeset) < len(timeset):
-            raise Exception('Duplicate time series definitions, enter only one definition if you want to use the same time for all sites')
+        unique_timeset = []
 
-        timeseries = [np.arange(timeset[0][0], timeset[0][1], delta, dtype='datetime64[m]')[:, np.newaxis]]
+        for time_s in timeset:
+            inflag = 0
+            for index in range(len(unique_timeset)):
+                if (unique_timeset[index] == time_s).all():
+                    inflag = 1
+            if inflag == 0:
+                unique_timeset.append(time_s)
+
+        if len(unique_timeset) == 1:
+            print(len(unique_timeset))
+            raise Exception(
+                'Duplicate time series definitions, enter only one definition if you want to use the same time for all sites')
+
+        timeseries = [timeset[0].values[:, np.newaxis].astype('datetime64[m]')]
 
         for index in range(len(timeset) - 1):
-            new_series = np.arange(timeset[index + 1][0], timeset[index + 1][1], delta, dtype='datetime64[m]')[:,
-                         np.newaxis]
+            new_series = timeset[index + 1].values[:, np.newaxis].astype('datetime64[m]')
 
             timeseries.append(new_series)
 
         return timeseries
 
     elif len(timeset) == 1:
-        timeseries = np.arange(timeset[0][0], timeset[0][1], delta, dtype='datetime64[m]')[:, np.newaxis]
+        timeseries = timeset[0].values[:, np.newaxis].astype('datetime64[m]')
 
         timeseries = np.tile(timeseries, num_station)
 
         return timeseries.T
+    elif len(timeset) > num_station:
+        raise Exception(
+            'Station number > time definition')
