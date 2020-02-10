@@ -21,7 +21,7 @@ if __name__ == '__main__':
     elevations = np.array([[43, 53]])
 
     # set the time series that you wish to model. Thi can be unique per locaton.
-    # first, specify the temporal resolution in minutes
+
     # timedef is a list of pandas time series definition for each location defined.
 
     timedef = [pd.date_range(start='2018-01-01T20:00:00', end='2018-01-02T15:00:00', freq='10T'),
