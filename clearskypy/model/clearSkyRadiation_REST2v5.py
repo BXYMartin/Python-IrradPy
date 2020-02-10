@@ -297,7 +297,7 @@ class ClearSkyREST2v5:
 
             [ghi, dni, dhi] = self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
             if self.pandas_output:
-                col_index = ['GHI', 'DNI', 'DHI']
+                col_index = ['GHI', 'DNI', 'DIF']
                 station_data_list = []
                 for index in range(len(self.time)):
                     time_temp = (self.time[index]).reshape(self.time[index].size, 1)
@@ -318,7 +318,7 @@ class ClearSkyREST2v5:
             ghi = []
             dni = []
             dhi = []
-            col_index = ['GHI', 'DNI', 'DHI']
+            col_index = ['GHI', 'DNI', 'DIF']
             station_data_list = []
 
             for index in range(len(self.time)):

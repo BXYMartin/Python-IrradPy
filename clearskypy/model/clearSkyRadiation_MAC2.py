@@ -185,7 +185,7 @@ class ClearSkyMAC2:
             [Egh, Edn, Edh] = self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550,
                                                   surface_albedo, Eext, components)
             if self.pandas_output:
-                col_index = ['GHI', 'DNI', 'DHI']
+                col_index = ['GHI', 'DNI', 'DIF']
                 station_data_list = []
                 for index in range(len(self.time)):
                     time_temp = (self.time[index]).reshape(self.time[index].size, 1)
@@ -204,7 +204,7 @@ class ClearSkyMAC2:
             Egh = []
             Edn = []
             Edh = []
-            col_index = ['GHI', 'DNI', 'DHI']
+            col_index = ['GHI', 'DNI', 'DIF']
             station_data_list = []
 
             for index in range(len(self.time)):

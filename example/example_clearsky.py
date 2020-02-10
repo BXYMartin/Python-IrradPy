@@ -34,12 +34,12 @@ if __name__ == '__main__':
 
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
-    # run the REST2v5 clear-sky model  output is a list of pandas.Dataframe for each station. col: GHI, DNI, DHI, row: time
+    # run the REST2v5 clear-sky model  output is a list of pandas.Dataframe for each station. col: GHI, DNI, DIF, row: time
     rest2_output = test_rest2.REST2v5()
 
     # create the MAC2 model class object
     test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
-    # run the MAC2 model  output is a list of pandas.Dataframe for each station  col: GHI, DNI, DHI, row: time
+    # run the MAC2 model  output is a list of pandas.Dataframe for each station  col: GHI, DNI, DIF, row: time
     mac2_output = test_mac.MAC2()
 
     # Create a figure showing the data of both clear-sky estimates
