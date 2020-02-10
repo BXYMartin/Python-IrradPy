@@ -1,24 +1,28 @@
 import numpy as np
 import clearskypy
 import os
+import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.units as munits
 import matplotlib.dates as mdates
 import datetime
 
 if __name__ == '__main__':
+    # check the version for matplotlib for ConciseDateConverter
+    assert int(matplotlib.__version__.split('.')[0]) >= 3 and int(matplotlib.__version__.split('.')[1]) >= 1, "Matplotlib >= 3.1 is required for function ConciseDateConverter!"
+
     # set some example latitudes, longitudes and elevations
     # latitudes range from -90 (south pole) to +90 (north pole) in degrees
     latitudes = np.array([[1.300341, 39.97937]])
     # longitudes range from -180 (west) through 0 at prime meridian to +180 (east)
-    longitudes = np.array([[103.771663, 116.34653]]) 
+    longitudes = np.array([[103.771663, 116.34653]])
     # elevations are in metres, this influences some solar elevation angles and scale height corrections
     elevations = np.array([[43, 53]])
 
     # set the time series that you wish to model. Thi can be unique per locaton.
     # first, specify the temporal resolution in minutes
     time_delta = 10  # minute
-    # timedef is a list of [(start time , end time)] for each location defined. 
+    # timedef is a list of [(start time , end time)] for each location defined.
     timedef = [('2018-01-01T20:00:00', '2018-01-02T15:00:00'),
                ('2018-01-02T20:00:00', '2018-01-03T15:00:00')]
     # use timeseries_builder to build time series for different station
@@ -26,15 +30,17 @@ if __name__ == '__main__':
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
-   
+
     # build the clear-sky REST2v5 model object
     test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
     # run the REST2v5 clear-sky model
+
     rest2_output = test_rest2.REST2v5()
 
     # create the MAC2 model class object
     test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
     # run the MAC2 model
+
     mac2_output = test_mac.MAC2()
 
     # Create a figure showing the data of both clear-sky estimates
@@ -42,13 +48,13 @@ if __name__ == '__main__':
     munits.registry[np.datetime64] = converter
     munits.registry[datetime.date] = converter
     munits.registry[datetime.datetime] = converter
-    
+
     plt.style.use('ggplot')
     plt.rcParams["font.family"] = "Times New Roman"
     plt.style.use('ggplot')
     lims = [(time[0][0], time[0][-1]),
             (time[1][0], time[1][-1])]
-    fig, axs = plt.subplots(1, 2, figsize=(7.4, 3), constrained_layout=True)   
+    fig, axs = plt.subplots(1, 2, figsize=(7.4, 3), constrained_layout=True)
     # make the first subplot for the location of SERIS
     t = time[0].astype('O')
     axs[0].plot(t, rest2_output[0].values[:, 0], ls='-', color='blue')
