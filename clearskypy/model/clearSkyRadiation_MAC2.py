@@ -3,11 +3,11 @@ import os
 import warnings
 from ..extractor.extract import extract_dataset_list, extract_dataset, extract_for_MERRA2
 from .solarGeometry import *
-
+import pandas as pd
 
 class ClearSkyMAC2:
 
-    def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir='./MERRA2_data/'):
+    def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir, pandas):
         if lat.shape != lon.shape:
             raise Exception('lat and lon not match...')
         if np.max(np.abs(lat)) > 90:
@@ -21,6 +21,7 @@ class ClearSkyMAC2:
         self.elev = elev.reshape([station_num, 1])
         self.time = time
         self.datadir = datadir
+        self.pandas_output = pandas
 
     def clear_sky_MAC2(self, sza, Angstrom_exponent, pressure, wv, AOD550, albedo, Eext, components):
         """
@@ -183,26 +184,48 @@ class ClearSkyMAC2:
 
             [Egh, Edn, Edh] = self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure, water_vapour, AOD550,
                                                   surface_albedo, Eext, components)
-            Egh = Egh.T
-            Edn = Edn.T
-            Edh = Edh.T
-            return [Egh, Edn, Edh]
+            if self.pandas_output:
+                col_index = ['GHI', 'DNI', 'DHI']
+                station_data_list = []
+                for index in range(len(self.time)):
+                    time_temp = (self.time[index]).reshape(self.time[index].size, 1)
+                    row_index = time_temp[:, 0]
+                    station_data = pd.DataFrame(np.hstack((Egh[:, index][:, np.newaxis], Edn[:, index][:, np.newaxis], Edh[:, index][:, np.newaxis])), index=row_index, columns=col_index)
+                    station_data_list.append(station_data)
+
+                return station_data_list
+
+            else:
+                Egh = Egh.T
+                Edn = Edn.T
+                Edh = Edh.T
+                return [Egh, Edn, Edh]
         else:
             Egh = []
             Edn = []
             Edh = []
+            col_index = ['GHI', 'DNI', 'DHI']
+            station_data_list = []
+
             for index in range(len(self.time)):
                 time_temp = (self.time[index]).reshape(self.time[index].size, 1)
                 zenith_angle = latlon2solarzenith(self.lat[index], self.lon[index], time_temp)
                 Eext = data_eext_builder(time_temp)
-
+                row_index = time_temp[:, 0]
                 [tot_aer_ext, AOD550, Angstrom_exponent, ozone, surface_albedo, water_vapour, pressure,
                  nitrogen_dioxide] = extract_for_MERRA2(self.lat[index], self.lon[index], time_temp,
                                                         self.elev[index], self.datadir)
                 [Egh_i, Edn_i, Edh_i] = self.clear_sky_MAC2(zenith_angle, Angstrom_exponent, pressure,
                                                             water_vapour, AOD550, surface_albedo, Eext,
                                                             components)
-                Egh.append(Egh_i)
-                Edn.append(Edn_i)
-                Edh.append(Edh_i)
-            return [Egh, Edn, Edh]
+                if self.pandas_output:
+                    station_data = pd.DataFrame(np.hstack((Egh_i, Edn_i, Edh_i)), index=row_index, columns=col_index)
+                    station_data_list.append(station_data)
+                else:
+                    Egh.append(Egh_i)
+                    Edn.append(Edn_i)
+                    Edh.append(Edh_i)
+            if self.pandas_output:
+                return station_data_list
+            else:
+                return [Egh, Edn, Edh]

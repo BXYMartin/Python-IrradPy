@@ -28,15 +28,15 @@ if __name__ == '__main__':
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
    
     # build the clear-sky REST2v5 model object
-    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir)
+    test_rest2 = clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
     # run the REST2v5 clear-sky model
-    [ghics_rest2, dnics_rest2, difcs_rest2] = test_rest2.REST2v5()
-    
+    rest2_output = test_rest2.REST2v5()
+
     # create the MAC2 model class object
-    test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir)
+    test_mac = clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir, pandas=True)
     # run the MAC2 model
-    [ghics_mac2, dnics_mac2, difcs_mac2] = test_mac.MAC2()
-    
+    mac2_output = test_mac.MAC2()
+
     # Create a figure showing the data of both clear-sky estimates
     converter = mdates.ConciseDateConverter()
     munits.registry[np.datetime64] = converter
@@ -51,12 +51,12 @@ if __name__ == '__main__':
     fig, axs = plt.subplots(1, 2, figsize=(7.4, 3), constrained_layout=True)   
     # make the first subplot for the location of SERIS
     t = time[0].astype('O')
-    axs[0].plot(t, ghics_rest2[0], ls='-', color='blue')
-    axs[0].plot(t, dnics_rest2[0], ls='--', color='blue')
-    axs[0].plot(t, difcs_rest2[0], ls='-.', color='blue')
-    axs[0].plot(t, ghics_mac2[0], ls='-', color='red')
-    axs[0].plot(t, dnics_mac2[0], ls='--', color='red')
-    axs[0].plot(t, difcs_mac2[0], ls='-.', color='red')
+    axs[0].plot(t, rest2_output[0].values[:, 0], ls='-', color='blue')
+    axs[0].plot(t, rest2_output[0].values[:, 1], ls='--', color='blue')
+    axs[0].plot(t, rest2_output[0].values[:, 2], ls='-.', color='blue')
+    axs[0].plot(t, mac2_output[0].values[:, 0], ls='-', color='red')
+    axs[0].plot(t, mac2_output[0].values[:, 1], ls='--', color='red')
+    axs[0].plot(t, mac2_output[0].values[:, 2], ls='-.', color='red')
     axs[0].set_xlim(lims[0])
     plt.sca(axs[0])
     plt.xticks(fontsize=8)
@@ -65,12 +65,12 @@ if __name__ == '__main__':
     plt.title('SERIS', fontsize=12, )
     # make the second subplot for the location of Beihang
     t = time[1].astype('O')
-    axs[1].plot(t, ghics_rest2[1], ls='-', color='blue')
-    axs[1].plot(t, dnics_rest2[1], ls='--', color='blue')
-    axs[1].plot(t, difcs_rest2[1], ls='-.', color='blue')
-    axs[1].plot(t, ghics_mac2[1], ls='-', color='red')
-    axs[1].plot(t, dnics_mac2[1], ls='--', color='red')
-    axs[1].plot(t, difcs_mac2[1], ls='-.', color='red')
+    axs[1].plot(t, rest2_output[1].values[:, 0], ls='-', color='blue')
+    axs[1].plot(t, rest2_output[1].values[:, 1], ls='--', color='blue')
+    axs[1].plot(t, rest2_output[1].values[:, 2], ls='-.', color='blue')
+    axs[1].plot(t, mac2_output[1].values[:, 0], ls='-', color='red')
+    axs[1].plot(t, mac2_output[1].values[:, 1], ls='--', color='red')
+    axs[1].plot(t, mac2_output[1].values[:, 2], ls='-.', color='red')
     axs[1].set_xlim(lims[1])
     axs[1].legend(['GHI REST2', 'DNI REST2', 'DIF REST2', 'GHI MAC2', 'DNI MAC2', 'DIF MAC2'], fontsize=8)
     plt.sca(axs[1])
@@ -84,9 +84,9 @@ if __name__ == '__main__':
 
     # Save the data to file, each site = new file
     for i in range(len(time)):
-            savedata = np.array([time[i].flatten(), ghics_rest2[i].flatten(), dnics_rest2[i].flatten(),
-                        difcs_rest2[i].flatten(), ghics_mac2[i].flatten(), dnics_mac2[i].flatten(),
-                        difcs_mac2[i].flatten()])
+            savedata = np.array([time[i].flatten(), rest2_output[i].values[:, 0].flatten(), rest2_output[i].values[:, 1].flatten(),
+                        rest2_output[i].values[:, 2].flatten(), mac2_output[i].values[:, 0].flatten(), mac2_output[i].values[:, 1].flatten(),
+                        mac2_output[i].values[:, 2].flatten()])
             savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) +'].txt'
             np.savetxt(savefname, savedata.T, fmt='%s' + ',%.4f' * 6, delimiter='\n', header='Time, GHIcs REST2, DNIcs REST2, DIFcs REST2, GHIcs MAC2, DNIcs MAC2, DIFcs MAC2')
-         
+

@@ -3,11 +3,11 @@ import os
 import warnings
 from ..extractor.extract import extract_dataset_list, extract_dataset, extract_for_MERRA2
 from .solarGeometry import *
-
+import pandas as pd
 
 class ClearSkyREST2v5:
 
-    def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir='./MERRA2_data/'):
+    def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir, pandas):
         if lat.shape != lon.shape:
             raise Exception('lat and lon not match...')
         if np.max(np.abs(lat)) > 90:
@@ -21,6 +21,7 @@ class ClearSkyREST2v5:
         self.elev = elev.reshape([station_num, 1])
         self.time = time
         self.datadir = datadir
+        self.pandas_output = pandas
 
     def clear_sky_REST2V5(self, zenith_angle: np.ndarray, Eext: np.ndarray, pressure: np.ndarray,
                          water_vapour: np.ndarray,
@@ -295,21 +296,35 @@ class ClearSkyREST2v5:
              nitrogen_dioxide] =extract_for_MERRA2(self.lat, self.lon, self.time.T, self.elev, self.datadir)
 
             [ghi, dni, dhi] = self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour,ozone, nitrogen_dioxide, AOD550,Angstrom_exponent, surface_albedo)
-            ghi = ghi.T
-            dni = dni.T
-            dhi = dhi.T
+            if self.pandas_output:
+                col_index = ['GHI', 'DNI', 'DHI']
+                station_data_list = []
+                for index in range(len(self.time)):
+                    time_temp = (self.time[index]).reshape(self.time[index].size, 1)
+                    row_index = time_temp[:, 0]
+                    station_data = pd.DataFrame(np.hstack((ghi[:, index][:, np.newaxis], dni[:, index][:, np.newaxis], dhi[:, index][:, np.newaxis])), index=row_index, columns=col_index)
+                    station_data_list.append(station_data)
 
-            return [ghi, dni, dhi]
+                return station_data_list
+
+            else:
+                ghi = ghi.T
+                dni = dni.T
+                dhi = dhi.T
+
+                return [ghi, dni, dhi]
 
         else:
             ghi = []
             dni = []
             dhi = []
+            col_index = ['GHI', 'DNI', 'DHI']
+            station_data_list = []
 
             for index in range(len(self.time)):
                 time_temp = (self.time[index]).reshape(self.time[index].size, 1)
                 zenith_angle = latlon2solarzenith(self.lat[index], self.lon[index], time_temp)
-
+                row_index = time_temp[:, 0]
                 zenith_angle = np.deg2rad(zenith_angle)
                 Eext = data_eext_builder(time_temp)
 
@@ -318,9 +333,16 @@ class ClearSkyREST2v5:
 
                 [ghi_i, dni_i, dhi_i] = self.clear_sky_REST2V5(zenith_angle, Eext, pressure, water_vapour, ozone,
                                                          nitrogen_dioxide, AOD550, Angstrom_exponent, surface_albedo)
-                ghi.append(ghi_i)
-                dni.append(dni_i)
-                dhi.append(dhi_i)
 
-            return [ghi, dni, dhi]
+                if self.pandas_output:
+                    station_data = pd.DataFrame(np.hstack((ghi_i, dni_i, dhi_i)), index=row_index, columns=col_index)
+                    station_data_list.append(station_data)
+                else:
+                    ghi.append(ghi_i)
+                    dni.append(dni_i)
+                    dhi.append(dhi_i)
+            if self.pandas_output:
+                return station_data_list
+            else:
+                return [ghi, dni, dhi]
 
