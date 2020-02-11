@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 import os
 import warnings
+import pandas as pd
 
 def date_check(date, date_start, date_end):
     if date_start <= date < date_end:
@@ -235,3 +236,77 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
     nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, np.size(times, 0)).reshape([np.size(times, 0), 1]),
                                lats.size)
     return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
+
+
+def extractor(lats, lons, elev, times, var, datadir, pandas=True):
+    """
+        Extract data from the MERRA2 database.
+        """
+    warnings.filterwarnings("ignore")
+    datadirlist = [os.listdir(datadir)][0]
+    dirlist = []
+    asmlist = []
+    for file in datadirlist:
+        if 'index' in file:
+            continue
+        elif 'const_2d_asm' in file:
+            asmlist.append(datadir + file)
+        elif 'merra2' in file:
+            dirlist.append(datadir + file)
+
+    dirlist.sort()
+
+    station_num = np.size(lats)
+    lats = lats.reshape([station_num, ])
+    lons = lons.reshape([station_num, ])
+
+    varnum = len(var)
+
+    same_flag = 1
+
+    for i in range(len(times) - 1):
+        if times[i + 1].shape == times[0].shape:
+            if (times[i + 1] != times[0]).any():
+                same_flag = 0
+        else:
+            same_flag = 0
+
+    if same_flag == 1:
+
+        merra2data = extract_dataset_list(lats, lons, dirlist, var, times.T, interpolate=True)
+
+        if pandas:
+            station_data_list = []
+            for index_station in range(station_num):
+                time_temp = (times[index_station]).reshape(times[index_station].size, 1)
+                row_index = time_temp[:, 0]
+                data_array = merra2data[0][:, index_station][:, np.newaxis]
+                for index_var in range(varnum - 1):
+                    data_array = np.hstack((data_array, merra2data[index_var + 1][:, index_station][:, np.newaxis]))
+
+                station_data = pd.DataFrame(data_array,index=row_index, columns=var)
+                station_data_list.append(station_data)
+
+            return station_data_list
+
+        else:
+            return merra2data
+    else:
+        station_data_list = []
+
+        for index_station in range(station_num):
+            time_temp = (times[index_station]).reshape(times[index_station].size, 1)
+            row_index = time_temp[:, 0]
+
+            merra2data = extract_dataset_list(lats[index_station], lons[index_station], dirlist, var, time_temp, interpolate=True)
+            data_array = merra2data[0]
+            for index_var in range(varnum - 1):
+                data_array = np.hstack((data_array, merra2data[index_var + 1]))
+
+            if pandas:
+                station_data = pd.DataFrame(data_array, index=row_index, columns=var)
+                station_data_list.append(station_data)
+            else:
+                station_data_list.append(data_array)
+
+        return station_data_list
