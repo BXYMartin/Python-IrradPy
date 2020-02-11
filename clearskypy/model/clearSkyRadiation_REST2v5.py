@@ -7,7 +7,7 @@ import pandas as pd
 
 class ClearSkyREST2v5:
 
-    def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir, pandas):
+    def __init__(self, lat: np.ndarray, lon: np.ndarray, elev, time, datadir, pandas=True):
         if lat.shape != lon.shape:
             raise Exception('lat and lon not match...')
         if np.max(np.abs(lat)) > 90:
