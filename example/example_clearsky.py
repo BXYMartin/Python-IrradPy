@@ -1,6 +1,7 @@
 import numpy as np
 import clearskypy
 import os
+# dependency on matplotlib >=3.1
 import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.units as munits
@@ -15,17 +16,18 @@ if __name__ == '__main__':
     # set some example latitudes, longitudes and elevations
     # latitudes range from -90 (south pole) to +90 (north pole) in degrees
     latitudes = np.array([[1.300341, 39.97937]])
+    
     # longitudes range from -180 (west) through 0 at prime meridian to +180 (east)
     longitudes = np.array([[103.771663, 116.34653]])
+    
     # elevations are in metres, this influences some solar elevation angles and scale height corrections
     elevations = np.array([[43, 53]])
 
-    # set the time series that you wish to model. Thi can be unique per locaton.
-
     # timedef is a list of pandas time series definition for each location defined.
-
+    # Note that an individual time series can be specified per site
     timedef = [pd.date_range(start='2018-01-01T20:00:00', end='2018-01-02T15:00:00', freq='10T'),
                pd.date_range(start='2018-01-02T20:00:00', end='2018-01-03T15:00:00', freq='10T')]
+    
     # use timeseries_builder to build time series for different station
     time = clearskypy.model.timeseries_builder(timedef, np.size(latitudes))
 
