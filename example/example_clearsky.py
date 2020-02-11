@@ -86,7 +86,7 @@ if __name__ == '__main__':
     plt.xlabel('Time UTC', fontsize=10)
     # save the figure and show to console
     plt.tight_layout()
-    fig.savefig('example_image.pdf')
+    fig.savefig('example_clearsky_image.pdf')
     plt.show()
 
     # Save the data to file, each site = new file
