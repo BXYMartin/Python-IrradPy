@@ -36,11 +36,20 @@ if __name__ == '__main__':
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
 
     # specify variables interest
-    variables = ['SWGDN', 'SWGDNCLR', 'CLDTOT', 'TAUTOT']
+    variables = ['SWGDN', 'SWGDNCLR']
 
     # extract the variable from the dataset
-
     MERRA2data = clearskypy.extractor.extractor(latitudes, longitudes, elevations, time, variables, dataset_dir, pandas=True)
+
+
+    # Save the data to file, each site = new file
+    for i in range(len(time)):
+        savedata = np.array(
+            [time[i].flatten(), MERRA2data[i].values[:, 0].flatten(), MERRA2data[i].values[:, 1].flatten()])
+        savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) + ']_data.txt'
+        np.savetxt(savefname, savedata.T, fmt='%s' + ',%.4f' * 2, delimiter='\n',
+                   header='Time, SWGDN, SWGDNCLR')
+
 
     # Create a figure showing the data of both clear-sky estimates
     converter = mdates.ConciseDateConverter()
@@ -58,8 +67,6 @@ if __name__ == '__main__':
     t = time[0].astype('O')
     axs[0].plot(t, MERRA2data[0].values[:, 0], ls='-', color='blue')
     axs[0].plot(t, MERRA2data[0].values[:, 1], ls='--', color='blue')
-    axs[0].plot(t, MERRA2data[0].values[:, 2], ls='-.', color='blue')
-    axs[0].plot(t, MERRA2data[0].values[:, 3], ls=':', color='blue')
     axs[0].set_xlim(lims[0])
     plt.sca(axs[0])
     plt.xticks(fontsize=8)
@@ -70,8 +77,6 @@ if __name__ == '__main__':
     t = time[1].astype('O')
     axs[1].plot(t, MERRA2data[1].values[:, 0], ls='-', color='blue')
     axs[1].plot(t, MERRA2data[1].values[:, 1], ls='--', color='blue')
-    axs[1].plot(t, MERRA2data[1].values[:, 2], ls='-.', color='blue')
-    axs[1].plot(t, MERRA2data[1].values[:, 3], ls=':', color='blue')
     axs[1].set_xlim(lims[1])
     axs[1].legend(variables, fontsize=8)
     plt.sca(axs[1])
@@ -82,13 +87,4 @@ if __name__ == '__main__':
     plt.tight_layout()
     fig.savefig('example_image.pdf')
     plt.show()
-
-    # Save the data to file, each site = new file
-    for i in range(len(time)):
-        savedata = np.array(
-            [time[i].flatten(), MERRA2data[i].values[:, 0].flatten(), MERRA2data[i].values[:, 1].flatten(),
-             MERRA2data[i].values[:, 2].flatten(), MERRA2data[i].values[:, 3].flatten()])
-        savefname = 'site[' + str(latitudes[0, i]) + ',' + str(longitudes[0, i]) + ']_data.txt'
-        np.savetxt(savefname, savedata.T, fmt='%s' + ',%.4f' * 4, delimiter='\n',
-                   header='Time, SWGDN, SWGDNCLR, CLDTOT, TAUTOT')
 
