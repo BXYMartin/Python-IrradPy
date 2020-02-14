@@ -1,5 +1,5 @@
 from multiprocessing import freeze_support
-import clearskypy
+import irradpy
 import unittest
 import os
 
@@ -69,7 +69,7 @@ class test_downloader(unittest.TestCase):
         }
 
     def test_download(self):
-        clearskypy.downloader.run(
+        irradpy.downloader.run(
             auth={"uid": self.username, "password": self.password},
             initial_year=self.initial_year,
             final_year=self.final_year,

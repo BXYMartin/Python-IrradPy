@@ -1,5 +1,5 @@
 import numpy as np
-import clearskypy
+import irradpy
 import os
 # dependency on matplotlib >=3.1
 import matplotlib
@@ -30,7 +30,7 @@ if __name__ == '__main__':
                pd.date_range(start='2018-01-02T20:00:00', end='2018-01-03T15:00:00', freq='10T')]
 
     # use timeseries_builder to build time series for different station
-    time = clearskypy.model.timeseries_builder(timedef, np.size(latitudes))
+    time = irradpy.model.timeseries_builder(timedef, np.size(latitudes))
 
     # specify where the downloaded dataset is. It is best to use the os.path.join function
     dataset_dir = os.path.join(os.getcwd(), 'MERRA2_data', '2018-1-1~2018-1-3 rad-slv-aer-asm [-90,-180]~[90,180]', '')
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     variables = ['SWGDN', 'SWGDNCLR']
 
     # extract the variable from the dataset
-    MERRA2data = clearskypy.extractor.extractor(latitudes, longitudes, elevations, time, variables, dataset_dir, pandas=True)
+    MERRA2data = irradpy.extractor.extractor(latitudes, longitudes, elevations, time, variables, dataset_dir, pandas=True)
 
 
     # Save the data to file, each site = new file

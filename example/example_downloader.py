@@ -1,5 +1,5 @@
 from multiprocessing import freeze_support
-import clearskypy
+import irradpy
 import os
 from getpass import getpass
 
@@ -73,7 +73,7 @@ class dummy_downloader():
         }
 
     def download(self):
-        clearskypy.downloader.run(
+        irradpy.downloader.run(
             auth={"uid": self.username, "password": self.password},
             initial_year=self.initial_year,
             final_year=self.final_year,

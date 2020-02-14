@@ -1,6 +1,6 @@
-# ClearSkyPy
-[![Build Status](https://travis-ci.org/BXYMartin/Python-ClearSkyPy.svg?branch=master)](https://travis-ci.org/BXYMartin/Python-ClearSkyPy)
-[![Latest Version](https://img.shields.io/github/v/release/bxymartin/python-clearskypy)](https://test.pypi.org/project/ClearSkyPy/)
+# IrradPy
+[![Build Status](https://travis-ci.org/BXYMartin/Python-irradpy.svg?branch=master)](https://travis-ci.org/BXYMartin/Python-irradpy)
+[![Latest Version](https://img.shields.io/github/v/release/bxymartin/python-irradpy)](https://test.pypi.org/project/irradpy/)
 
 Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model, extract variables from the MERRA-2 reanalysis database and model of clear-sky irradiance.
 
@@ -30,26 +30,26 @@ Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model,
 #### Use inside Python Script
 ``` python
 # Linux and Unix Users
-import clearskypy
+import irradpy
 # Run Downloader
-clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
+irradpy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
 # Run Model
-clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir).REST2v5()
-clearskypy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir).MAC2()
+irradpy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir).REST2v5()
+irradpy.model.ClearSkyMAC2(latitudes, longitudes, elevations, time, dataset_dir).MAC2()
 
 
 # Windows Users Only:
-import clearskypy
+import irradpy
 import multiprocessing
 # Important Note: If you're using windows, make sure to wrap the function.
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
+    irradpy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"})
     
 # More Examples
 
 # Download All Data From 2018-01-01 To 2018-01-02
-clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
+irradpy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
     initial_year=2018, final_year=2018,
     initial_month=1, final_month=1,
     initial_day=1, final_day=2,
@@ -62,8 +62,8 @@ clearskypy.downloader.run(auth={"uid":"USERNAME", "password": "PASSWORD"},
 # Run clear sky model from 2018-01-01 To 2018-01-02
 time_delta = 10  # minute
 timedef = [('2018-01-01T00:00:00', '2018-01-02T0:00:00')]
-time = clearskypy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
-clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir).REST2v5()
+time = irradpy.model.timeseries_builder(timedef, time_delta, np.size(latitudes))
+irradpy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, dataset_dir).REST2v5()
 ```
 
 ``` python
@@ -117,7 +117,7 @@ clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, datase
     connection_num : Optional[int]
         Number of Connections for each file to be downloaded simutanously.
         
-    #clearskypy.model.timeseries_builder:
+    #irradpy.model.timeseries_builder:
     timedef: list [(start time , end time)], optional — specify the start 
         time(s) and end time(s) of the location(s) of interest.
     time_delta: integer, optional — specify the temporal resolution of the 
@@ -126,7 +126,7 @@ clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, datase
         if timedef less than num_station, timeseries_builder will expand it 
         for every station.
     
-    #clearskypy.model.clearSkyRadiation_MAC2.py && clearskypy.model.clearSkyRadiation_REST2v5.py:
+    #irradpy.model.clearSkyRadiation_MAC2.py && irradpy.model.clearSkyRadiation_REST2v5.py:
     
     latitudes: numpy.ndarray, float, compulsory — Define the latitude(s) of the 
         location(s) of interest, size must match longitudes. 
@@ -144,7 +144,7 @@ clearskypy.model.ClearSkyREST2v5(latitudes, longitudes, elevations, time, datase
 
 #### Run Package From Shell
 ``` bash
-python -m clearskypy.downloader.socket --uid USERNAME --password PASSWORD
+python -m irradpy.downloader.socket --uid USERNAME --password PASSWORD
 
 usage: socket.py [-h] [--collection_names VAR_NAMES]
                  [--download_dir DOWNLOAD_DIR] [--initial_year INITIAL_YEAR]
@@ -208,7 +208,7 @@ python setup.py test
 #### Package
 ```
 .
-├── clearskypy
+├── irradpy
 │   ├── __init__.py
 │   ├── downloader
 │   │   ├── __init__.py
@@ -248,5 +248,5 @@ python setup.py install
 ```
 With python package:
 ``` bash
-pip install -i https://test.pypi.org/simple/ ClearSkyPy
+pip install -i https://test.pypi.org/simple/ irradpy
 ```

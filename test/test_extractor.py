@@ -1,5 +1,5 @@
 import numpy as np
-import clearskypy
+import irradpy
 
 
 def test_extract_MERRA2(lats, lons, datavecs, elevs):
@@ -24,10 +24,10 @@ def test_extract_MERRA2(lats, lons, datavecs, elevs):
     slvpath = 'path to slv dataset'
     asmpath = 'path to asm dataset'
 
-    aer_var = clearskypy.extractor.extract_dataset(lats, lons, aerpath, aer_pool, datavecs)
-    rad_var = clearskypy.extractor.extract_dataset(lats, lons, radpath, rad_pool, datavecs)
-    slv_var = clearskypy.extractor.extract_dataset(lats, lons, slvpath, slv_pool, datavecs)
-    asm_var = clearskypy.extractor.extract_dataset(lats, lons, asmpath, asm_pool, datavecs, interpolate=False)
+    aer_var = irradpy.extractor.extract_dataset(lats, lons, aerpath, aer_pool, datavecs)
+    rad_var = irradpy.extractor.extract_dataset(lats, lons, radpath, rad_pool, datavecs)
+    slv_var = irradpy.extractor.extract_dataset(lats, lons, slvpath, slv_pool, datavecs)
+    asm_var = irradpy.extractor.extract_dataset(lats, lons, asmpath, asm_pool, datavecs, interpolate=False)
 
     tot_aer_ext = aer_var[1]
     AOD_550 = aer_var[0]
@@ -56,7 +56,7 @@ def test_extract_dataset_list():
     date = ['2019-01-01T12:30:00', '2019-01-04T11:45:00', '2019-01-05T01:30:00']
     datapathlist = ['path to dataset1', 'path to dataset2']
     rad_pool = ['ALBEDO']
-    test = clearskypy.extractor.extract_dataset_list(lats, lons, datapathlist, rad_pool, date, interpolate=True)
+    test = irradpy.extractor.extract_dataset_list(lats, lons, datapathlist, rad_pool, date, interpolate=True)
     print(test)
 
 
