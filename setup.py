@@ -39,14 +39,14 @@ if __name__ == "__main__":
     freeze_support()
     assert sys.version_info >= (3, 6), "Minimum Python >= 3.6 is required!"
     setup(
-        name = "ClearSkyPy",
+        name = "irradpy",
         version = "1.5.0",
         keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
         description = "Download tool for MERRA2 dataset for Clear Sky Model.",
         long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
         license = "MIT Licence",
 
-        url = "https://github.com/BXYMartin/Python-ClearSkyPy",
+        url = "https://github.com/BXYMartin/Python-irradpy",
         author = "Jamie Bright, Yue Zhang, Martin Bai",
         author_email = "jamiebright1@gmail.com",
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         cmdclass = {'test': DiscoverTest},
         entry_points = {
             'console_scripts': [
-                'merra2_downloader = clearskypy.downloader.socket:main'
+                'merra2_downloader = irradpy.downloader.socket:main'
             ]
         }
     )
