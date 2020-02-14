@@ -9,5 +9,5 @@ install:
   - python setup.py install
 # command to run tests
 script:
-  - python -m clearskypy.downloader.socket --help
+  - python -m irradpy.downloader.socket --help
   - merra2_downloader --help
