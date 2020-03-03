@@ -250,3 +250,6 @@ With python package:
 ``` bash
 pip install -i https://test.pypi.org/simple/ irradpy
 ```
+
+## License
+This project is licensed under MIT License, feel free to modify or contribute!
