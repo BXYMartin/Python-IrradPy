@@ -10,6 +10,12 @@ def dayth_hourth(datetime):
 
     return dayth, hourth
 
+def time2dayth(datearray):
+    time = datearray.astype(datetime.datetime)
+    yday = np.vectorize(dayth_hourth)
+    dayth, hourth = yday(time)
+    return dayth
+
 
 def latlon2solarzenith(lat, lon, datearray):
     """
