@@ -19,7 +19,7 @@
 import numpy as np
 from .solarGeometry import *
 
-class clearSkyTJ:
+class ClearSkyTJ:
     def __init__(self, time):
         self.dayth = time2dayth(time)
 
@@ -36,22 +36,22 @@ class clearSkyTJ:
         # Coefficients
         A = 1160+75*np.sin(2*np.pi*(self.dayth-275)/365)
         k = 0.174+0.035*np.sin(2*np.pi*(self.dayth-100)/365)
-	C = 0.095+0.04*np.sin(2*np.pi*(self.dayth-100)/365)
+        C = 0.095+0.04*np.sin(2*np.pi*(self.dayth-100)/365)
 
-	# Direct Normal Irradiance
-	EbnTJ = A*np.exp(-1*k*mA)
+        # Direct Normal Irradiance
+        EbnTJ = A*np.exp(-1*k*mA)
 
-	# Diffuse Horizontal Irradiance
-	EdhTJ = C*EbnTJ
+        # Diffuse Horizontal Irradiance
+        EdhTJ = C*EbnTJ
 
-	# Global Horizontal Irradiance
-	EghTJ = EbnTJ*np.cos(sza)+EdhTJ
+        # Global Horizontal Irradiance
+        EghTJ = EbnTJ*np.cos(sza)+EdhTJ
 
         # Quality Control
         lower = 0
         EbnTJ[EbnTJ<lower] = 0
         EdhTJ[EdhTJ<lower] = 0
         EghTJ[EghTJ<lower] = 0
-        return EbnTJ, EdhTJ, EghTJ
+        return [EbnTJ, EdhTJ, EghTJ]
 
 
