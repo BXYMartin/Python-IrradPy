@@ -1,4 +1,6 @@
 from .clearSkyRadiation_TJ import ClearSkyTJ
+from .clearSkyRadiation_DPP import ClearSkyDPP
+from .clearSkyRadiation_Adnot import ClearSkyAdnot
 from .clearSkyRadiation_MAC2 import ClearSkyMAC2
 from .clearSkyRadiation_REST2v5 import ClearSkyREST2v5
 from .clearSkyRadiation_Schulze import ClearSkySchulze
