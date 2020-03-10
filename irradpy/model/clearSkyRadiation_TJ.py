@@ -34,9 +34,9 @@ class ClearSkyTJ:
         mA = 1 / np.cos(sza)
 
         # Coefficients
-        A = 1160+75*np.sin(2*np.pi*(self.dayth-275)/365)
-        k = 0.174+0.035*np.sin(2*np.pi*(self.dayth-100)/365)
-        C = 0.095+0.04*np.sin(2*np.pi*(self.dayth-100)/365)
+        A = 1160+75*np.sin(360*(self.dayth-275)/365)
+        k = 0.174+0.035*np.sin(360*(self.dayth-100)/365)
+        C = 0.095+0.04*np.sin(360*(self.dayth-100)/365)
 
         # Direct Normal Irradiance
         EbnTJ = A*np.exp(-1*k*mA)

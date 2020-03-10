@@ -5,17 +5,30 @@ import numpy as np
 
 def dayth_hourth(datetime):
     datetuple = datetime.timetuple()
+    yearth = datetuple.tm_year
+    month = datetuple.tm_mon
     dayth = datetuple.tm_yday
     hourth = datetuple.tm_hour + datetuple.tm_min / 60
 
-    return dayth, hourth
+    return dayth, hourth, month, yearth
 
 def time2dayth(datearray):
     time = datearray.astype(datetime.datetime)
     yday = np.vectorize(dayth_hourth)
-    dayth, hourth = yday(time)
+    dayth, hourth, month, yearth = yday(time)
     return dayth
 
+def time2month(datearray):
+    time = datearray.astype(datetime.datetime)
+    yday = np.vectorize(dayth_hourth)
+    dayth, hourth, month, yearth = yday(time)
+    return yearth
+
+def time2month(datearray):
+    time = datearray.astype(datetime.datetime)
+    yday = np.vectorize(dayth_hourth)
+    dayth, hourth, month, yearth = yday(time)
+    return month
 
 def latlon2solarzenith(lat, lon, datearray):
     """
@@ -30,7 +43,7 @@ def latlon2solarzenith(lat, lon, datearray):
 
     yday = np.vectorize(dayth_hourth)
 
-    dayth, hourth = yday(time)
+    dayth, hourth, month, yearth = yday(time)
 
     dayth = dayth.T
     hourth = hourth.T
@@ -69,7 +82,7 @@ def data_eext_builder(datearray):
 
     yday = np.vectorize(dayth_hourth)
 
-    ndd, hourth = yday(datearray)
+    ndd, hourth, month, yearth = yday(datearray)
 
     esc = 1366.1
     beta = (2 * np.pi * ndd) / 365
