@@ -18,7 +18,7 @@ def time2dayth(datearray):
     dayth, hourth, month, yearth = yday(time)
     return dayth
 
-def time2month(datearray):
+def time2yearth(datearray):
     time = datearray.astype(datetime.datetime)
     yday = np.vectorize(dayth_hourth)
     dayth, hourth, month, yearth = yday(time)

@@ -18,7 +18,7 @@
 
 ###Codes:
 import numpy as np
-from .solarGeometry import time2yearth
+from .solarGeometry import time2dayth, time2yearth
 
 class ClearSkySharma:
     def __init__(self, time):
