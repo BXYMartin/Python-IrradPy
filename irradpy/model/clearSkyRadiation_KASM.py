@@ -23,13 +23,13 @@
 import numpy as np
 from .solarGeometry import time2dayth, time2yearth
 
-class ClearSkyAtwaterBall1:
+class ClearSkyKASM:
     def __init__(self, time, press):
         self.dayth = time2dayth(time)
         self.yearth = time2yearth(time)
         self.press = press
 
-    def AtwaterBall1(self, sza, wv):
+    def KASM(self, sza, wv):
         # Extraterrestrial irradiance
         Esc = 1367
         totaldayofyear = 366 - np.ceil(self.yearth / 4 - np.trunc(self.yearth / 4))
