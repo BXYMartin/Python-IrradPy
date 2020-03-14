@@ -10,4 +10,3 @@ install:
 # command to run tests
 script:
   - python -m irradpy.downloader.remote.socket --help
-  - merra2_downloader --help
