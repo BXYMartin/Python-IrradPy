@@ -74,7 +74,6 @@ if __name__ == "__main__":
         cmdclass = {'test': DiscoverTest},
         entry_points = {
             'console_scripts': [
-                'merra2_downloader = irradpy.downloader.remote.socket:main'
             ]
         }
     )
