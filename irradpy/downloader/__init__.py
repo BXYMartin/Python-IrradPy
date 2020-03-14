@@ -1,5 +1,5 @@
-from .socket import run
-from . import socket
-from .variables import var_list
+from .remote.socket import run
+from . import remote
+from . import ground
 
-__all__ = ['socket', 'variables']
+__all__ = ['remote', 'ground']

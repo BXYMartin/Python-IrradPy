@@ -40,7 +40,7 @@ if __name__ == "__main__":
     assert sys.version_info >= (3, 6), "Minimum Python >= 3.6 is required!"
     setup(
         name = "irradpy",
-        version = "1.5.0",
+        version = "2.0.0",
         keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
         description = "Download tool for MERRA2 dataset for Clear Sky Model.",
         long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
@@ -67,13 +67,14 @@ if __name__ == "__main__":
             "argparse >= 1.0",
             "cython >= 0.29.0",
             "pandas >= 0.20.0",
+            "progressbar >= 2.1",
             ],
 
         scripts = [],
         cmdclass = {'test': DiscoverTest},
         entry_points = {
             'console_scripts': [
-                'merra2_downloader = irradpy.downloader.socket:main'
+                'merra2_downloader = irradpy.downloader.remote.socket:main'
             ]
         }
     )

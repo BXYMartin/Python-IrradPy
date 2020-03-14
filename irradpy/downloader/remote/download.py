@@ -21,6 +21,7 @@ import numpy as np
 import numpy.ma as ma
 import urllib.error
 from multiprocessing.pool import MaybeEncodingError
+from progressbar import ProgressBar, Percentage, Bar, ETA, FileTransferSpeed
 from calendar import monthrange
 from pathlib import Path
 from typing import List
@@ -176,6 +177,7 @@ class SocketManager:
             except MaybeEncodingError as e:
                 logging.error(log + ': Error in Serialize Results')
             except Exception as e:
+                raise e
                 logging.error(log + ': ' + str(e))
 
         if retry:
