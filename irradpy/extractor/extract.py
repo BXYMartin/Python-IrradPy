@@ -210,7 +210,7 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
     dirlist.sort()
 
     variables = ['TOTEXTTAU', 'TOTSCATAU', 'TOTANGSTR', 'ALBEDO', 'TO3', 'TQV', 'PS']
-    [AOD_550, tot_aer_ext, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(lats, lons,
+    [tot_aer_ext, AOD_550, tot_angst, albedo, ozone, water_vapour, pressure] = extract_dataset_list(lats, lons,
                                                                                                     dirlist, variables,
                                                                                                     times,
                                                                                                     interpolate=True)
