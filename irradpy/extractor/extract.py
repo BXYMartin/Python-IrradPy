@@ -172,7 +172,7 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
     if time_cover_start > 0 and cover_flag ==1:
         for index_variable in range(len(variables)):
             var[index_variable] = np.vstack(
-                (np.full((time_cover_start, np.size(datevecs_for_dataset, 1)), np.nan)), var[index_variable])
+                (np.full((time_cover_start, np.size(datevecs_for_dataset, 1)), np.nan), var[index_variable]))
 
     if time_cover_end < np.size(datevecs_for_dataset, 0) - 1 and cover_flag == 1:
         for index_variable in range(len(variables)):
