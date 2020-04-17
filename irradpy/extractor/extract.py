@@ -101,6 +101,50 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
     return var
 
 
+def extract_pnnl_dataset_list(dataset_path_list, variables, datearray, interpolate=True):
+    """
+    extract variables from dataset
+
+    :param dataset_path_list: list of string
+    :param variables: list of string
+    :param datearray: np.ndarray of np.datetime64
+    :param interpolate: bool
+
+    :return var: list of numpy.ndarray
+
+    lons and lats determine a site coordinate together. lons.length==lat.length
+
+    datavecs need to increase monotonically.
+
+    """
+    '''
+    var_list = []
+    for dataset_path in dataset_path_list:
+        var = extract_dataset(lats, lons, dataset_path, variables, datevecs, interpolate)
+        var_list.append(var)
+    return var_list
+    '''
+
+    date_item = []
+    for item in datearray:
+        date_item.append(item.dayofyear * 24 + item.hour)
+    var_list = []
+    for index_dataset in range(len(dataset_path_list)):
+        print("Processing File " + dataset_path_list[index_dataset])
+        dataset_time = np.array(xr.open_dataset(dataset_path_list[index_dataset])['time'])
+        date_item = list(filter(lambda x: x >= dataset_time[0] and x <= dataset_time[-1], date_item))
+        if len(date_item):
+            newvar = xr.open_dataset(dataset_path_list[index_dataset]).sel(time=date_item, method="nearest")[variables]
+            var_list.append(newvar)
+    if len(var_list):
+        print("Merging All Results...")
+        var = xr.concat(var_list, dim='time')
+    else:
+        raise Exception('No data was extracted by the extractor, please check the data set path is correct')
+    return var
+
+
+
 def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, interpolate=True):
     """
     extract variables from dataset
@@ -189,6 +233,34 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
 
 
     return var
+
+
+def extract_for_PNNL(times, datadir):
+    """
+    Extract data from the PNNL database
+    """
+    warnings.filterwarnings("ignore")
+    print("Preparing Files To Extract...")
+    datadirlist = [os.listdir(datadir)][0]
+    dirlist = []
+    for file in datadirlist:
+        if 'reanalysis' in file:
+            dirlist.append(os.path.join(datadir, file))
+        elif 'EPIC_SW_PAR_Hourly' in file:
+            dirlist.append(os.path.join(datadir, file))
+
+    dirlist.sort()
+    ret = []
+    variables = ['par_diffuse', 'par_direct', 'sw_diffuse', 'sw_direct', 'quality_flag']
+    for time in times:
+        print("Extracting For " + str(time[0]) + " To " + str(time[-1]))
+        result = extract_pnnl_dataset_list(dirlist, variables,time, interpolate=True)
+        ret.append(result)
+        print("Extration Finished!")
+
+    print("Extraction Complete!")
+    return ret
+
 
 
 def extract_for_MERRA2(lats, lons, times, elev, datadir):
