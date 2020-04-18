@@ -9,4 +9,4 @@ install:
   - python setup.py install
 # command to run tests
 script:
-  - python -m irradpy.downloader.remote.socket --help
+  - python -m irradpy.downloader.merra.socket --help

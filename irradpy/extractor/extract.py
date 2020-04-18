@@ -129,7 +129,7 @@ def extract_pnnl_dataset_list(lats, lons, dataset_path_list, variables, datearra
     from_date = "2015-1-1 00:30:00"
     init = datetime.datetime.strptime(from_date, "%Y-%m-%d %H:%M:%S")
     for item in datearray:
-        date_item.append(int((item.astype('M8[ms]').astype('O') - init).total_seconds()/3600))
+        date_item.append(int((item[0].astype('M8[ms]').astype('O') - init).total_seconds()/3600))
     var_list = []
     for index_dataset in range(len(dataset_path_list)):
         print("Processing File " + dataset_path_list[index_dataset])
@@ -139,7 +139,7 @@ def extract_pnnl_dataset_list(lats, lons, dataset_path_list, variables, datearra
             new = xr.open_dataset(dataset_path_list[index_dataset])
             new = new.set_coords("latitude")
             new = new.set_coords("longitude")
-            newvar = new.sel(lat=lats, lon=lons, time=date_item)[variables]
+            newvar = new.sel(lat=lats[0], lon=lons[0], time=date_item)[variables]
             var_list.append(newvar)
     if len(var_list):
         print("Merging All Results...")
