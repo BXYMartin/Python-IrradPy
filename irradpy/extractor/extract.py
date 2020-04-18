@@ -101,7 +101,7 @@ def extract_dataset(lats, lons, dataset_path, variables, datetime, interpolate=T
     return var
 
 
-def extract_pnnl_dataset_list(dataset_path_list, variables, datearray, interpolate=True):
+def extract_pnnl_dataset_list(lats, lons, dataset_path_list, variables, datearray, interpolate=True):
     """
     extract variables from dataset
 
@@ -136,7 +136,10 @@ def extract_pnnl_dataset_list(dataset_path_list, variables, datearray, interpola
         dataset_time = np.array(xr.open_dataset(dataset_path_list[index_dataset])['time'])
         date_item = list(filter(lambda x: x >= dataset_time[0] and x <= dataset_time[-1], date_item))
         if len(date_item):
-            newvar = xr.open_dataset(dataset_path_list[index_dataset]).sel(time=date_item, method="nearest")[variables]
+            new = xr.open_dataset(dataset_path_list[index_dataset])
+            new = new.set_coords("latitude")
+            new = new.set_coords("longitude")
+            newvar = new.sel(lat=lats, lon=lons, time=date_item)[variables]
             var_list.append(newvar)
     if len(var_list):
         print("Merging All Results...")
@@ -237,7 +240,7 @@ def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, in
     return var
 
 
-def extract_for_PNNL(times, datadir):
+def extract_for_PNNL(lats, lons, times, datadir):
     """
     Extract data from the PNNL database
     """
@@ -256,7 +259,7 @@ def extract_for_PNNL(times, datadir):
     variables = ['par_diffuse', 'par_direct', 'sw_diffuse', 'sw_direct', 'quality_flag']
     for time in times:
         print("Extracting For " + str(time[0]) + " To " + str(time[-1]))
-        result = extract_pnnl_dataset_list(dirlist, variables,time, interpolate=True)
+        result = extract_pnnl_dataset_list(lats, lons, dirlist, variables,time, interpolate=True)
         ret.append(result)
         print("Extration Finished!")
 
