@@ -16,9 +16,9 @@ if __name__ == '__main__':
     lons = np.array([[20, 10]])
     # timedef is a list of pandas time series definition for each location defined.
     # Note that an individual time series can be specified per site
-    timedef = [pd.date_range(start='2015-06-14T20:00:00', end='2015-06-14T21:00:00', freq='60T'), pd.date_range(start='2015-06-15T20:00:00', end='2015-06-15T21:00:00', freq='60T')]
+    timedef = [pd.date_range(start='2015-06-14T20:00:00', end='2015-06-14T21:00:00', freq='60T'),pd.date_range(start='2015-06-14T20:00:00', end='2015-06-14T21:00:00', freq='60T'), pd.date_range(start='2015-06-15T20:00:00', end='2015-06-15T21:00:00', freq='60T')]
 
-    time = irradpy.model.timeseries_builder(timedef, np.size(lats))
+    time = irradpy.model.timeseries_builder(timedef, np.size(timedef)/2)
     # extract the variable from the dataset
     print(time)
     PNNLdata = irradpy.extractor.extract_for_PNNL(lats, lons, time, data_dir)
