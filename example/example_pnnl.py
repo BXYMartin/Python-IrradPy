@@ -12,8 +12,9 @@ if __name__ == '__main__':
     irradpy.downloader.pnnl.run(data_dir=data_dir, merge_timelapse="monthly")
     # timedef is a list of pandas time series definition for each location defined.
     # Note that an individual time series can be specified per site
-    time = [pd.date_range(start='2015-06-14T20:00:00', end='2015-06-14T21:00:00', freq='60T')]
+    timedef = [pd.date_range(start='2015-06-14T20:00:00', end='2015-06-14T21:00:00', freq='60T')]
 
+    time = irradpy.model.timeseries_builder(timedef, np.size(timedef))
     # extract the variable from the dataset
     PNNLdata = irradpy.extractor.extract_for_PNNL(time, data_dir)
 

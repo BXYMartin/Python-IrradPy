@@ -126,8 +126,10 @@ def extract_pnnl_dataset_list(dataset_path_list, variables, datearray, interpola
     '''
 
     date_item = []
+    from_date = "2015-1-1 00:30:00"
+    init = datetime.datetime.strptime(from_date, "%Y-%m-%d %H:%M:%S")
     for item in datearray:
-        date_item.append(item.dayofyear * 24 + item.hour)
+        date_item.append(int((item.astype('M8[ms]').astype('O') - init).total_seconds()/3600))
     var_list = []
     for index_dataset in range(len(dataset_path_list)):
         print("Processing File " + dataset_path_list[index_dataset])
