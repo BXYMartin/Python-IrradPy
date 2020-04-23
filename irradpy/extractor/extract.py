@@ -134,7 +134,7 @@ def extract_pnnl_dataset_list(lats, lons, dataset_path_list, variables, datearra
     for index_dataset in range(len(dataset_path_list)):
         print("Processing File " + dataset_path_list[index_dataset])
         dataset_time = np.array(xr.open_dataset(dataset_path_list[index_dataset])['time'])
-        date_item = list(filter(lambda x: x >= dataset_time[0] and x <= dataset_time[-1], date_item))
+        date_item = list(filter(lambda x: x in dataset_time, date_item))
         if len(date_item):
             new = xr.open_dataset(dataset_path_list[index_dataset])
             new = new.set_coords("latitude")
