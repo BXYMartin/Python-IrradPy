@@ -1,4 +1,5 @@
 from .merra.socket import run
+from .bsrn.socket import run
 from . import merra
 from . import bsrn
 from . import pnnl

@@ -4,6 +4,9 @@ import datetime
 import os
 import warnings
 import pandas as pd
+import csv
+from ..model.solarGeometry import latlon2solarzenith
+
 
 def date_check(date, date_start, date_end):
     if date_start <= date < date_end:
@@ -147,7 +150,6 @@ def extract_pnnl_dataset_list(lats, lons, dataset_path_list, variables, datearra
     else:
         raise Exception('No data was extracted by the extractor, please check the data set path is correct')
     return var
-
 
 
 def extract_dataset_list(lats, lons, dataset_path_list, variables, datearray, interpolate=True):
@@ -313,6 +315,115 @@ def extract_for_MERRA2(lats, lons, times, elev, datadir):
     nitrogen_dioxide = np.tile(np.linspace(0.0002, 0.0002, np.size(times, 0)).reshape([np.size(times, 0), 1]),
                                lats.size)
     return [tot_aer_ext, AOD_550, tot_angst, ozone, albedo, water_vapour, pressure, nitrogen_dioxide]
+
+
+def extract_for_BSRN(data_directory='BSRN_data', store_directory='Processed_data', metadata_path='metadata.txt'):
+    merra2_vars = ['tot_aer_ext', 'AOD_550', 'alpha', 'ozone', 'albedo', 'water_vapour', 'pressure']
+    mer_defaults = [0.2, 0.1, 1.1, 0.3, 0.2, 0.3, 1013.25]
+    data_headers = ['day_of_month', 'minute_of_day', 'G_irrad', 'G_stddev',
+                    'G_min', 'G_max', 'B', 'B_stddev', 'B_min', 'B_max', 'D', 'D_stddev',
+                    'D_min', 'D_max', 'dlwr', 'dlwr_stddev', 'dlwr_min', 'dlwr_max',
+                    'air_temp_at_dlwr_height', 'rh_at_dlwr_height', 'p_at_dlwr_height']
+    site_var = ['ALE', 'ASP', 'BAR', 'BER', 'BIL', 'BON', 'BOU', 'BOS', 'BRB', 'CAB', 'CAM', 'CAR', 'CNR', 'CLH', 'COC',
+                'DOM', 'DAR', 'DWN', 'DAA', 'DRA', 'ENA', 'EUR', 'FLO', 'FPE', 'FUA', 'GVN', 'GOB', 'GCR', 'ILO', 'ISH',
+                'IZA', 'KWA', 'LRC', 'LAU', 'LER', 'LIN', 'MNM', 'MAN', 'NAU', 'NYA', 'PAL', 'PAY', 'PTR', 'REG', 'PSU',
+                'SAP', 'SBO', 'SXF', 'SOV', 'SON', 'SPO', 'E13', 'SYO', 'SMS', 'TAM', 'TAT', 'TIK', 'TIR', 'TOR', 'XIA']
+    data_table_vars_to_keep = [3, 7, 11]
+
+    # get site_info from metadata.txt (stored as metadata_path)
+    with open(metadata_path, 'r') as f:
+        reader = csv.reader(f)
+        site_info_list = [row for row in reader]
+
+    # get the processed site list (processed_site_list)
+    processed_site_list = []
+    for file in os.listdir(store_directory):
+        if file.endswith('.npy'):
+            processed_site_list.append(file.split('.')[0])
+    processed_data = {}
+    # For each sites' datafile with extension '.npy' which are not yet processed, process their data.
+    for site_code in site_var:
+        # get data and time_date file path
+        data_file_path = os.path.join(data_directory, site_code + '_data.npy')
+        time_date_file_path = os.path.join(data_directory, site_code + '_time_date.npy')
+
+        # Check if corresponding data and time_date file exist, if not continue
+        if not (os.path.exists(data_file_path) and os.path.exists(time_date_file_path)):
+            print('No corresponding data and time_date file')
+            continue
+        elif not os.path.exists(data_file_path):
+            print('No corresponding data file')
+            continue
+        elif not os.path.exists(data_file_path):
+            print('No corresponding data file')
+            continue
+
+        # Load corresponding data and time_date file, get np.array
+        data = np.load(data_file_path)
+        date_vecs = np.load(time_date_file_path)
+        # date_vec in form of ['day_of_month', 'minute_of_day']
+        date_vecs1 = data[:, 0:2]
+
+        # get this site info
+        for i in range(len(site_info_list)):
+            if site_info_list[i][1] == site_code:
+                site_info = site_info_list[i]
+        latitudes = site_info[3]
+        longitudes = site_info[4]
+
+        # calculate correspondent zenith angle
+        zen = latlon2solarzenith(latitudes, longitudes, date_vecs)
+        data = data[zen <= 90, :]
+        data = data[:, data_table_vars_to_keep]
+        date_vecs = date_vecs[zen <= 90, :]
+        date_vecs1 = date_vecs[zen <= 90, :]
+        zen = zen[zen <= 90, :]
+
+        # remove timestamps where all GHI, DNI, DIF are missing
+        idxs = ~(np.isnan(data[:, 0]) & np.isnan(data[:, 1]) & np.isnan(data[:, 2]))
+        data = data[idxs, :]
+        date_vecs = date_vecs[idxs, :]
+        date_vecs1 = date_vecs[idxs, :]
+        zen = zen[idxs, :]
+
+        # calculate Eext solar constant from Gueymard 2018.
+        Esc = 1361.1
+        ndd = date_vecs1  ##########
+        beta = (2.) * (np.pi) * ndd
+        Eext = Esc * (1.00011 + 0.034221 * np.cos(beta) + 0.00128 * np.sin(beta) +
+                      0.000719 * np.cos(2 * beta) + 0.000077 * np.sin(2 * beta))
+
+        # delete any periods where the data is 0 for all time steps (e.g in
+        # the polar regions where zenith is mildly <90, but still 0)
+        idxs = ~(np.nansum(data, axis=1) == 0)
+        zen = zen[idxs]
+        Eext = Eext[idxs]
+        data = data[idxs]
+        date_vecs = date_vecs[idxs]
+        date_vecs1 = date_vecs1[idxs]
+
+        # assign data to structs
+        S = {}
+        # Create GHIsum
+        S['GHIsum'] = np.cos(np.deg2rad(zen)) * data[:, 1] + data[:, 2]
+        # assign data into struct
+        S['zenith'] = zen
+        S['Eext'] = Eext
+        S['datevec_UTC'] = date_vecs
+        S['GHImeas'] = data[:, 1]
+        S['DNImeas'] = data[:, 2]
+        S['DIFmeas'] = data[:, 3]
+
+        # As we have no Reanalysis for now, assign default values for each
+        # of the required variables for clear-sky irradiance calculations
+        print('...Assigning default atmospheric variables.')
+        S['merra2_vars'] = []
+        for mer in range(len(merra2_vars)):
+            S['merra2_vars'].append(np.ones(np.size(S['GHImeas'])) * mer_defaults[mer])
+        S['nitrogen_dioxide'] = np.ones(np.size(S['GHImeas'])) * 0.0002
+        processed_data[site_code] = S
+
+    return processed_data
 
 
 def extractor(lats, lons, elev, times, var, datadir, pandas=True):
