@@ -2,21 +2,22 @@
 [![Build Status](https://travis-ci.org/BXYMartin/Python-irradpy.svg?branch=master)](https://travis-ci.org/BXYMartin/Python-irradpy)
 [![Latest Version](https://img.shields.io/github/v/release/bxymartin/python-irradpy)](https://test.pypi.org/project/irradpy/)
 
-Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model, extract variables from the MERRA-2 reanalysis database and model of clear-sky irradiance.
+Python script to download data from MERRA-2, BSRN and PNNL Database. Models for clear-sky irradiance modelling are also included!
 
 ## Functions
-* Skip already downloaded files.
-* Automatically merge files by year.
+* Skip already downloaded files (for MERRA-2 and PNNL).
+* Automatically merge files by year (for MERRA-2 and PNNL).
 * Allow multi-field selection for each table.
 * Extract variables for a given time period from multiple MERRA-2 reanalysis databases.
 * Automatic zenith angle calculation.
-* Support two models: MAC2 and REST2 models.
-* To Be Continue...
+* Include 40+ irradiance models.
+* To Be Continued...
 
 ## Details
 ### Requirements
 * Python >= 3.6
 ### Overview
+- For MERRA-2 Downloads:
 * Register on GESDISC website and get your authentication.
 * Install the script to your computer.
     - You can either download this package from the [Github Release Page](https://github.com/BXYMartin/Python-MERRA2/releases) and [Github Package Page](https://github.com/BXYMartin/Python-MERRA2/packages), or clone this repository and run `python setup.py install`. 
@@ -25,6 +26,9 @@ Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model,
 * Download data sets by downloader
 * Define latitude, longitude, elevation, time period for a model.
 * Run the model.
+
+- For BSRN and PNNL Downloads:
+Not Required.
 
 ### Usage
 #### Use inside Python Script
