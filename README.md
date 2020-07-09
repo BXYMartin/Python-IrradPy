@@ -17,7 +17,7 @@ Python script to download data from MERRA-2, BSRN and PNNL Database. Models for 
 ### Requirements
 * Python >= 3.6
 ### Overview
-- For MERRA-2 Downloads:
+For MERRA-2 Downloads:
 * Register on GESDISC website and get your authentication.
 * Install the script to your computer.
     - You can either download this package from the [Github Release Page](https://github.com/BXYMartin/Python-MERRA2/releases) and [Github Package Page](https://github.com/BXYMartin/Python-MERRA2/packages), or clone this repository and run `python setup.py install`. 
@@ -27,7 +27,7 @@ Python script to download data from MERRA-2, BSRN and PNNL Database. Models for 
 * Define latitude, longitude, elevation, time period for a model.
 * Run the model.
 
-- For BSRN and PNNL Downloads:
+For BSRN and PNNL Downloads:
 Not Required.
 
 ### Usage
