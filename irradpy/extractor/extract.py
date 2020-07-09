@@ -5,7 +5,7 @@ import os
 import warnings
 import pandas as pd
 import csv
-from ..model.solarGeometry import latlon2solarzenith
+
 
 
 def date_check(date, date_start, date_end):
@@ -372,6 +372,7 @@ def extract_for_BSRN(data_directory='BSRN_data', store_directory='Processed_data
         longitudes = site_info[4]
 
         # calculate correspondent zenith angle
+        from ..model.solarGeometry import latlon2solarzenith
         zen = latlon2solarzenith(latitudes, longitudes, date_vecs)
         data = data[zen <= 90, :]
         data = data[:, data_table_vars_to_keep]

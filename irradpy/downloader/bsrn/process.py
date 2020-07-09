@@ -185,7 +185,7 @@ class SocketManager:
                     if site_code in ["tat", "reg"]:
                         rad_measure = "Y"
                     # Contains Radiation Measurements
-                    if rad_measure is not "Y":
+                    if rad_measure != "Y":
                         print("Site %s Does not Contain Radiation Measurements" % site_code)
                         continue
                     result = re.search(r'[CU]0100\n', content)
