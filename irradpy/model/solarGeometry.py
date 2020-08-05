@@ -3,8 +3,11 @@ import datetime
 import numpy as np
 
 
-def dayth_hourth(datetime):
-    datetuple = datetime.timetuple()
+def dayth_hourth(time):
+    try:
+        datetuple = time.timetuple()
+    except AttributeError:
+        datetuple = datetime.datetime.now().timetuple()
     yearth = datetuple.tm_year
     month = datetuple.tm_mon
     dayth = datetuple.tm_yday

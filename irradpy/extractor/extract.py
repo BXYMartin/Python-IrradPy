@@ -7,7 +7,6 @@ import pandas as pd
 import csv
 
 
-
 def date_check(date, date_start, date_end):
     if date_start <= date < date_end:
         return date
@@ -337,6 +336,8 @@ def extract_for_BSRN(data_directory='BSRN_data', store_directory='Processed_data
 
     # get the processed site list (processed_site_list)
     processed_site_list = []
+    if not os.path.exists(store_directory):
+        os.mkdir(store_directory)
     for file in os.listdir(store_directory):
         if file.endswith('.npy'):
             processed_site_list.append(file.split('.')[0])
@@ -344,25 +345,24 @@ def extract_for_BSRN(data_directory='BSRN_data', store_directory='Processed_data
     # For each sites' datafile with extension '.npy' which are not yet processed, process their data.
     for site_code in site_var:
         # get data and time_date file path
-        data_file_path = os.path.join(data_directory, site_code + '_data.npy')
-        time_date_file_path = os.path.join(data_directory, site_code + '_time_date.npy')
+        data_file_path = os.path.join(data_directory, site_code, site_code + '.npy')
 
         # Check if corresponding data and time_date file exist, if not continue
-        if not (os.path.exists(data_file_path) and os.path.exists(time_date_file_path)):
-            print('No corresponding data and time_date file')
+        if not os.path.exists(data_file_path):
+            print('No corresponding data file for ' + site_code)
             continue
-        elif not os.path.exists(data_file_path):
-            print('No corresponding data file')
-            continue
-        elif not os.path.exists(data_file_path):
-            print('No corresponding data file')
-            continue
+        else:
+            print('Processing file for ' + site_code)
 
         # Load corresponding data and time_date file, get np.array
         data = np.load(data_file_path)
-        date_vecs = np.load(time_date_file_path)
+        # remove invalid time
+        print("Removing NaN Value From {} Source Data...".format(site_code))
+        print("Total: {}".format(len(data)))
+        data = data[~np.isnan(data).any(axis=1)]
+        print("Valid: {}".format(len(data)))
+        date_vecs = data[:, 0]
         # date_vec in form of ['day_of_month', 'minute_of_day']
-        date_vecs1 = data[:, 0:2]
 
         # get this site info
         for i in range(len(site_info_list)):
@@ -371,58 +371,28 @@ def extract_for_BSRN(data_directory='BSRN_data', store_directory='Processed_data
         latitudes = site_info[3]
         longitudes = site_info[4]
 
+        print("Site Info: Lon {}, Lat {}".format(longitudes, latitudes))
+        # reduced size for test
+        # date_vecs = date_vecs[0:10]
+        # data = data[0:10, :]
+
         # calculate correspondent zenith angle
         from ..model.solarGeometry import latlon2solarzenith
-        zen = latlon2solarzenith(latitudes, longitudes, date_vecs)
-        data = data[zen <= 90, :]
-        data = data[:, data_table_vars_to_keep]
-        date_vecs = date_vecs[zen <= 90, :]
-        date_vecs1 = date_vecs[zen <= 90, :]
-        zen = zen[zen <= 90, :]
-
-        # remove timestamps where all GHI, DNI, DIF are missing
-        idxs = ~(np.isnan(data[:, 0]) & np.isnan(data[:, 1]) & np.isnan(data[:, 2]))
-        data = data[idxs, :]
-        date_vecs = date_vecs[idxs, :]
-        date_vecs1 = date_vecs[idxs, :]
-        zen = zen[idxs, :]
-
-        # calculate Eext solar constant from Gueymard 2018.
-        Esc = 1361.1
-        ndd = date_vecs1  ##########
-        beta = (2.) * (np.pi) * ndd
-        Eext = Esc * (1.00011 + 0.034221 * np.cos(beta) + 0.00128 * np.sin(beta) +
-                      0.000719 * np.cos(2 * beta) + 0.000077 * np.sin(2 * beta))
-
-        # delete any periods where the data is 0 for all time steps (e.g in
-        # the polar regions where zenith is mildly <90, but still 0)
-        idxs = ~(np.nansum(data, axis=1) == 0)
-        zen = zen[idxs]
-        Eext = Eext[idxs]
-        data = data[idxs]
-        date_vecs = date_vecs[idxs]
-        date_vecs1 = date_vecs1[idxs]
-
+        zen = np.zeros(len(date_vecs));
+        for i in range(len(date_vecs)):
+            zen[i] = latlon2solarzenith(np.array([latitudes], dtype=np.float32), np.array([longitudes], dtype=np.float32), np.array(date_vecs[i]))
         # assign data to structs
         S = {}
         # Create GHIsum
         S['GHIsum'] = np.cos(np.deg2rad(zen)) * data[:, 1] + data[:, 2]
         # assign data into struct
         S['zenith'] = zen
-        S['Eext'] = Eext
         S['datevec_UTC'] = date_vecs
         S['GHImeas'] = data[:, 1]
         S['DNImeas'] = data[:, 2]
         S['DIFmeas'] = data[:, 3]
-
-        # As we have no Reanalysis for now, assign default values for each
-        # of the required variables for clear-sky irradiance calculations
-        print('...Assigning default atmospheric variables.')
-        S['merra2_vars'] = []
-        for mer in range(len(merra2_vars)):
-            S['merra2_vars'].append(np.ones(np.size(S['GHImeas'])) * mer_defaults[mer])
-        S['nitrogen_dioxide'] = np.ones(np.size(S['GHImeas'])) * 0.0002
         processed_data[site_code] = S
+        print("Finished Processing For {}".format(site_code))
 
     return processed_data
 
