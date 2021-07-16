@@ -40,7 +40,7 @@ if __name__ == "__main__":
     assert sys.version_info >= (3, 6), "Minimum Python >= 3.6 is required!"
     setup(
         name = "irradpy",
-        version = "1.5.1",
+        version = "1.5.0",
         keywords = ("MERRA2", "Clear Sky Model", "Solar Energy"),
         description = "Download tool for MERRA2 dataset for Clear Sky Model.",
         long_description = "This is a automated tool for MERRA2 data collection and filtering, for the analysis of Clear Sky Model.",
