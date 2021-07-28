@@ -120,7 +120,7 @@ def run(
     # Call the main function
     socket = SocketManager()
     socket.daily_download_and_convert(
-        collection_names, merra2_var_dicts=None,
+        collection_names, merra2_var_dicts=merra2_var_dicts,
         initial_year=initial_year, initial_month=initial_month, initial_day=initial_day,
         final_year=final_year, final_month=final_month, final_day=final_day,
         output_dir=output_dir,
