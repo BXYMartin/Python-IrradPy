@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/BXYMartin/Python-irradpy.svg?branch=master)](https://travis-ci.org/BXYMartin/Python-irradpy)
 [![Latest Version](https://img.shields.io/github/v/release/bxymartin/python-irradpy)](https://test.pypi.org/project/irradpy/)
 
-Python script to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model, extract variables from the MERRA-2 reanalysis database and model of clear-sky irradiance.
+Python package to download data from gesdisc.eosdis.nasa.gov for Clear Sky Model, extract variables from the MERRA-2 reanalysis database and model of clear-sky irradiance.
 
 ## Example Figure
 Using this tool, you can map out the global horizontal irradiance on a global basis or for a specific country. 
