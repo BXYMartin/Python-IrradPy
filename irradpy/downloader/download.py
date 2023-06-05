@@ -642,7 +642,7 @@ class SocketManager:
                 if not merra2_var_dicts:
                     merra2_var_dict = var_list[collection_name]
                 else:
-                    merra2_var_dict = merra2_var_dicts[i]
+                    merra2_var_dict = merra2_var_dicts[collection_name]
                 # Download subdaily files
                 # Translate the coordinates that define your area to grid coordinates.
                 lat_coord_1 = self.translate_lat_to_geos5_native(lat_1)
